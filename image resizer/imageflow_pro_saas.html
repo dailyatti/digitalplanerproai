@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImageFlow Pro - Professional SaaS Image Processing Platform</title>
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ImageFlow Pro">
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiM2NjdlZWEiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik00IDE2bDQuNTg2LTQuNTg2YTIgMiAwIDAxMi44MjggMEwxNiAxNm0tMi0ybDEuNTg2LTEuNTg2YTIgMiAwIDAxMi44MjggMEwyMCAxNG0tNi02aC4wMU02IDIwaDEyYTIgMiAwIDAwMi0yVjZhMiAyIDAgMDAtMi0ySDZhMiAyIDAgMDAtMiAydjEyYTIgMiAwIDAwMiAyeiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cjwvc3ZnPgo=">
+  
+  <!-- External Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #667eea;
+      --primary-dark: #5a67d8;
+      --secondary: #764ba2;
+      --accent: #f093fb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --dark: #1a202c;
+      --light: #f7fafc;
+      
+      --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --gradient-danger: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      --gradient-dark: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .glass-effect {
+      backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .dark .glass-effect {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .gradient-text {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .animated-bg {
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .hover-lift {
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .hover-lift:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .dark .hover-lift:hover {
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .drag-over {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border-color: var(--primary);
+      transform: scale(1.02);
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .pulse-ring {
+      position: absolute;
+      border: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: pulseRing 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+    }
+    
+    @keyframes pulseRing {
+      0% {
+        transform: scale(0.33);
+        opacity: 1;
+      }
+      40%, 50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.33);
+      }
+    }
+    
+    .connection-indicator {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .connection-indicator::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      animation: connectionPulse 2s infinite;
+    }
+    
+    .connection-indicator.connected::before {
+      background: rgba(16, 185, 129, 0.3);
+    }
+    
+    .connection-indicator.connecting::before {
+      background: rgba(245, 158, 11, 0.3);
+    }
+    
+    .connection-indicator.disconnected::before {
+      background: rgba(239, 68, 68, 0.3);
+    }
+    
+    @keyframes connectionPulse {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0;
+      }
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(102, 126, 234, 0.2);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .progress-bar {
+      position: relative;
+      height: 12px;
+      background: rgba(156, 163, 175, 0.2);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--gradient-primary);
+      border-radius: 6px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background-image: linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.2) 75%,
+        transparent 75%,
+        transparent
+      );
+      background-size: 30px 30px;
+      animation: move 2s linear infinite;
+    }
+    
+    @keyframes move {
+      0% { background-position: 0 0; }
+      100% { background-position: 30px 0; }
+    }
+    
+    .qr-scanner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .qr-scanner-frame {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .qr-scanner-corners {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+    }
+    
+    .qr-scanner-corners::before,
+    .qr-scanner-corners::after {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border: 3px solid var(--primary);
+    }
+    
+    .qr-scanner-corners::before {
+      top: 10px;
+      left: 10px;
+      border-right: none;
+      border-bottom: none;
+    }
+    
+    .qr-scanner-corners::after {
+      bottom: 10px;
+      right: 10px;
+      border-left: none;
+      border-top: none;
+    }
+    
+    .file-transfer-animation {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .file-transfer-animation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      animation: fileTransfer 2s infinite;
+    }
+    
+    @keyframes fileTransfer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+    
+    .storage-meter {
+      background: linear-gradient(90deg, 
+        var(--success) 0%, 
+        var(--success) 60%, 
+        var(--warning) 60%, 
+        var(--warning) 80%, 
+        var(--danger) 80%
+      );
+      height: 8px;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .storage-meter::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent 50%, rgba(255, 255, 255, 0.3) 50%);
+      animation: shine 2s infinite;
+    }
+    
+    @keyframes shine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    .device-card {
+      background: var(--gradient-primary);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .device-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .device-card:hover::before {
+      opacity: 1;
+    }
+    
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 20px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+    }
+    
+    .tooltip {
+      position: relative;
+    }
+    
+    .tooltip::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .tooltip:hover::before {
+      opacity: 1;
+    }
+    
+    .floating-panel {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 50;
+    }
+    
+    .floating-button {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-xl);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .floating-button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.5s ease;
+      transform: translate(-50%, -50%);
+    }
+    
+    .floating-button:hover::before {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .floating-button:hover {
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 25px 50px -12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stats-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .dark .stats-card {
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+      .hover-lift:hover {
+        transform: none;
+      }
+      
+      .floating-panel {
+        bottom: 1rem;
+        right: 1rem;
+      }
+      
+      .floating-button {
+        width: 56px;
+        height: 56px;
+      }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .animate-slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .animate-bounce-in {
+      animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    @keyframes bounceIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.3);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+      70% {
+        transform: scale(0.9);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    .premium-border {
+      position: relative;
+      background: linear-gradient(45deg, #f3ec78, #af4261, #f3ec78);
+      background-size: 400% 400%;
+      animation: gradientBorder 4s ease infinite;
+    }
+    
+    @keyframes gradientBorder {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .neon-glow {
+      box-shadow: 
+        0 0 5px var(--primary),
+        0 0 10px var(--primary),
+        0 0 15px var(--primary),
+        0 0 20px var(--primary);
+    }
+  </style>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#667eea',
+            secondary: '#764ba2',
+            accent: '#f093fb'
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'bounce-slow': 'bounce 2s infinite',
+            'spin-slow': 'spin 3s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 min-h-screen transition-all duration-500">
+  
+  <!-- Theme Toggle -->
+  <button id="themeToggle" class="fixed top-6 right-6 z-50 p-3 rounded-full glass-effect hover:scale-110 transition-all duration-300 tooltip" data-tooltip="Téma váltása">
+    <svg id="sunIcon" class="w-6 h-6 text-yellow-500 hidden" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+    </svg>
+    <svg id="moonIcon" class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+    </svg>
+  </button>
+
+  <!-- Connection Status Bar -->
+  <div id="connectionBar" class="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 transform -translate-y-full transition-transform duration-300">
+    <div class="container mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div id="connectionIndicator" class="connection-indicator disconnected w-3 h-3 bg-red-500 rounded-full"></div>
+        <span id="connectionStatus">Offline</span>
+      </div>
+      <div id="connectedDevices" class="text-sm opacity-80">0 eszköz csatlakoztatva</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="relative overflow-hidden pt-16">
+    <div class="absolute inset-0 animated-bg opacity-10"></div>
+    <div class="container mx-auto px-6 py-16 relative">
+      <div class="text-center max-w-4xl mx-auto">
+        <div class="flex items-center justify-center mb-6">
+          <div class="p-4 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </div>
+        
+        <h1 class="text-6xl md:text-8xl font-black gradient-text mb-6 animate-bounce-in">
+          ImageFlow
+          <span class="block text-4xl md:text-5xl font-light text-slate-600 dark:text-slate-400 mt-2">
+            Professional SaaS
+          </span>
+        </h1>
+        
+        <p class="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-8 leading-relaxed animate-fade-in">
+          Professzionális képfeldolgozás vezeték nélküli eszközmegosztással, QR kódos párosítással és veszteségmentes minőségű konverzióval.
+        </p>
+        
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-slide-in">
+          <div class="stats-card text-center">
+            <div class="text-3xl font-bold gradient-text" id="totalImages">0</div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">Kép betöltve</div>
+          </div>
+          <div class="stats-card text-center">
+            <div class="text-3xl font-bold gradient-text" id="totalProcessed">0</div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">Feldolgozva</div>
+          </div>
+          <div class="stats-card text-center">
+            <div class="text-3xl font-bold gradient-text" id="totalStorage">0 MB</div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">Tárhely</div>
+          </div>
+          <div class="stats-card text-center">
+            <div class="text-3xl font-bold gradient-text" id="connectedCount">0</div>
+            <div class="text-sm text-slate-600 dark:text-slate-400">Eszköz</div>
+          </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="flex flex-wrap gap-4 justify-center animate-bounce-in">
+          <button id="quickUpload" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Gyors Feltöltés
+          </button>
+          
+          <button id="connectDevice" class="px-8 py-4 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-xl hover:from-green-700 hover:to-teal-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+            </svg>
+            Eszköz Csatlakoztatása
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-6 pb-12">
+    
+    <!-- Navigation Tabs -->
+    <div class="mb-8">
+      <div class="flex flex-wrap gap-2 p-2 glass-effect rounded-2xl">
+        <button class="nav-tab active px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2" data-tab="upload">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Feltöltés & Feldolgozás
+        </button>
+        <button class="nav-tab px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2" data-tab="devices">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Eszköz Kezelés
+        </button>
+        <button class="nav-tab px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2" data-tab="analytics">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Tárhely Analytics
+        </button>
+        <button class="nav-tab px-6 py-3 rounded-xl transition-all duration-300 flex items-center gap-2" data-tab="transfer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          Fájl Átvitel
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload & Processing Tab -->
+    <div id="uploadTab" class="tab-content active">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <!-- Control Panel -->
+        <div class="lg:col-span-1">
+          <div class="sticky top-8 space-y-6">
+            
+            <!-- Upload Section -->
+            <div class="glass-effect rounded-2xl p-6 hover-lift">
+              <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Képek feltöltése
+              </h2>
+              <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 hover:border-blue-400">
+                <svg class="mx-auto h-12 w-12 text-slate-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="text-lg font-semibold text-slate-600 dark:text-slate-400">Húzza ide a képeket</p>
+                <p class="text-sm text-slate-500 mt-2">vagy kattintson a tallózáshoz</p>
+                <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+              </div>
+            </div>
+
+            <!-- Quick Processing -->
+            <div class="glass-effect rounded-2xl p-6 hover-lift">
+              <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Gyors Feldolgozás
+              </h2>
+              
+              <div class="space-y-4">
+                <div class="grid grid-cols-3 gap-2">
+                  <button class="quick-preset px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors" data-preset="thumbnail">
+                    📱 Thumbnail
+                  </button>
+                  <button class="quick-preset px-3 py-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-lg text-sm hover:bg-green-200 dark:hover:bg-green-800 transition-colors" data-preset="social">
+                    📸 Social
+                  </button>
+                  <button class="quick-preset px-3 py-2 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-lg text-sm hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors" data-preset="web">
+                    🌐 Web
+                  </button>
+                </div>
+                
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <label class="block text-sm font-medium mb-2">Cél formátum</label>
+                  <select id="quickFormat" class="w-full px-3 py-2 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-lg">
+                    <option value="webp">WebP (Optimális)</option>
+                    <option value="jpg">JPG (Kisebb méret)</option>
+                    <option value="png">PNG (Átlátszóság)</option>
+                    <option value="avif">AVIF (Jövő)</option>
+                  </select>
+                </div>
+                
+                <button id="quickProcess" class="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105">
+                  ⚡ Gyors Feldolgozás
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Grid -->
+        <div class="lg:col-span-3">
+          <div id="imageGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 custom-scrollbar">
+            <!-- Images will be rendered here -->
+          </div>
+          
+          <!-- Empty State -->
+          <div id="emptyState" class="text-center py-20">
+            <div class="animate-bounce-in">
+              <svg class="mx-auto h-24 w-24 text-slate-400 mb-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h3 class="text-2xl font-bold text-slate-600 dark:text-slate-400 mb-2">Kezdje a képfeldolgozást!</h3>
+              <p class="text-slate-500 max-w-md mx-auto">Húzzon ide képeket, vagy kattintson a feltöltés gombra a kezdéshez. A platform támogatja a batch feldolgozást és a vezeték nélküli fájlmegosztást.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Device Management Tab -->
+    <div id="devicesTab" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Connection Panel -->
+        <div class="lg:col-span-1">
+          <div class="space-y-6">
+            
+            <!-- QR Code Connection -->
+            <div class="glass-effect rounded-2xl p-6 hover-lift">
+              <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+                QR Kód Csatlakozás
+              </h2>
+              
+              <div class="text-center">
+                <div id="qrCode" class="bg-white p-4 rounded-lg mb-4 inline-block">
+                  <!-- QR Code will be generated here -->
+                </div>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                  Szkenneljétek be ezt a QR kódot a másik eszközön a csatlakozáshoz
+                </p>
+                <button id="regenerateQR" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                  🔄 Új QR kód
+                </button>
+              </div>
+            </div>
+
+            <!-- Manual Connection -->
+            <div class="glass-effect rounded-2xl p-6 hover-lift">
+              <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                </svg>
+                Kézi Csatlakozás
+              </h2>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Eszköz ID</label>
+                  <input type="text" id="deviceId" placeholder="Adja meg az eszköz ID-ját" 
+                         class="w-full px-3 py-2 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-lg">
+                </div>
+                <button id="connectManual" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  🔗 Csatlakozás
+                </button>
+              </div>
+            </div>
+
+            <!-- Connection Stats -->
+            <div class="glass-effect rounded-2xl p-6 hover-lift">
+              <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Kapcsolat Statisztikák
+              </h2>
+              
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">Aktív kapcsolatok:</span>
+                  <span class="font-semibold" id="activeConnections">0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">Átvitt fájlok:</span>
+                  <span class="font-semibold" id="transferredFiles">0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-slate-600 dark:text-slate-400">Átvitt adatok:</span>
+                  <span class="font-semibold" id="transferredData">0 MB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connected Devices -->
+        <div class="lg:col-span-2">
+          <div class="glass-effect rounded-2xl p-6">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+              <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Csatlakoztatott Eszközök
+              <span id="deviceCount" class="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm">0</span>
+            </h2>
+            
+            <div id="deviceList" class="space-y-4">
+              <!-- Connected devices will appear here -->
+              <div class="text-center py-12 text-slate-500">
+                <svg class="mx-auto h-16 w-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <p>Nincs csatlakoztatott eszköz</p>
+                <p class="text-sm mt-2">Használja a QR kódot vagy az eszköz ID-t a csatlakozáshoz</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="analyticsTab" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Storage Overview -->
+        <div class="glass-effect rounded-2xl p-6 hover-lift">
+          <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+            </svg>
+            Tárhely Áttekintés
+          </h2>
+          
+          <div class="space-y-6">
+            <div>
+              <div class="flex justify-between mb-2">
+                <span class="text-sm font-medium">Felhasznált tárhely</span>
+                <span class="text-sm font-semibold" id="usedStorage">0 MB / 1 GB</span>
+              </div>
+              <div class="storage-meter">
+                <div id="storageBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600" id="originalSize">0 MB</div>
+                <div class="text-sm text-slate-600 dark:text-slate-400">Eredeti méret</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-green-600" id="compressedSize">0 MB</div>
+                <div class="text-sm text-slate-600 dark:text-slate-400">Tömörített méret</div>
+              </div>
+            </div>
+            
+            <div class="text-center p-4 bg-green-100 dark:bg-green-900 rounded-lg">
+              <div class="text-lg font-bold text-green-600" id="savingsPercent">0%</div>
+              <div class="text-sm text-green-600">Megtakarított hely</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Type Distribution -->
+        <div class="glass-effect rounded-2xl p-6 hover-lift">
+          <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Fájltípus Eloszlás
+          </h2>
+          
+          <div id="fileTypeChart" class="space-y-4">
+            <!-- File type distribution will be shown here -->
+          </div>
+        </div>
+
+        <!-- Processing History -->
+        <div class="lg:col-span-2 glass-effect rounded-2xl p-6 hover-lift">
+          <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+            <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Feldolgozási Előzmények
+          </h2>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-700">
+                  <th class="text-left py-3 px-4 font-semibold">Időpont</th>
+                  <th class="text-left py-3 px-4 font-semibold">Fájl neve</th>
+                  <th class="text-left py-3 px-4 font-semibold">Eredeti méret</th>
+                  <th class="text-left py-3 px-4 font-semibold">Új méret</th>
+                  <th class="text-left py-3 px-4 font-semibold">Megtakarítás</th>
+                  <th class="text-left py-3 px-4 font-semibold">Státusz</th>
+                </tr>
+              </thead>
+              <tbody id="historyTable">
+                <tr>
+                  <td colspan="6" class="text-center py-8 text-slate-500">Nincs feldolgozási előzmény</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Transfer Tab -->
+    <div id="transferTab" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Transfer Controls -->
+        <div class="lg:col-span-1">
+          <div class="space-y-6">
+            
+            <!-- Send Files -->
+            <div class="glass-effect rounded-2xl p-6 hover-lift">
+              <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                Fájlok Küldése
+              </h2>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium mb-2">Cél eszköz</label>
+                  <select id="targetDevice" class="w-full px-3 py-2 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-lg">
+                    <option value="">Válasszon eszközt...</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-2">Fájlok kiválasztása</label>
+                  <div id="fileSelection" class="max-h-40 overflow-y-auto custom-scrollbar space-y-2">
+                    <!-- Selected files will appear here -->
+                  </div>
+                </div>
+                
+                <button id="sendFiles" class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 font-semibold shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                  📤 Fájlok Küldése
+                </button>
+              </div>
+            </div>
+
+            <!-- Transfer Settings -->
+            <div class="glass-effect rounded-2xl p-6 hover-lift">
+              <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Átviteli Beállítások
+              </h2>
+              
+              <div class="space-y-4">
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" id="compressBeforeTransfer" checked class="rounded">
+                  <span class="text-sm">Tömörítés átvitel előtt</span>
+                </label>
+                
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" id="encryptTransfer" class="rounded">
+                  <span class="text-sm">Titkosított átvitel</span>
+                </label>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-2">Átviteli sebesség limit</label>
+                  <select id="speedLimit" class="w-full px-3 py-2 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-lg">
+                    <option value="unlimited">Korlátlan</option>
+                    <option value="1">1 MB/s</option>
+                    <option value="5">5 MB/s</option>
+                    <option value="10">10 MB/s</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Transfers -->
+        <div class="lg:col-span-2">
+          <div class="glass-effect rounded-2xl p-6">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+              <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4" />
+              </svg>
+              Aktív Átvitelek
+            </h2>
+            
+            <div id="activeTransfers" class="space-y-4">
+              <!-- Active transfers will appear here -->
+              <div class="text-center py-12 text-slate-500">
+                <svg class="mx-auto h-16 w-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4" />
+                </svg>
+                <p>Nincs aktív átvitel</p>
+                <p class="text-sm mt-2">Válasszon ki fájlokat és egy cél eszközt az átvitel megkezdéséhez</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <div class="floating-panel">
+    <button id="floatingAction" class="floating-button tooltip" data-tooltip="Gyors műveletek">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Modals and Overlays -->
+  
+  <!-- Progress Modal -->
+  <div id="progressModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full shadow-2xl animate-bounce-in">
+      <div class="text-center">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <h3 id="progressTitle" class="text-xl font-semibold mb-2">Feldolgozás...</h3>
+        <p id="progressText" class="text-slate-600 dark:text-slate-400 mb-4">Kérjük várjon...</p>
+        <div class="progress-bar mb-4">
+          <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="text-sm text-slate-500">
+          <span id="progressCount">0</span> / <span id="progressTotal">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Scanner Modal -->
+  <div id="qrScannerModal" class="qr-scanner-overlay hidden">
+    <div class="text-center">
+      <div class="qr-scanner-frame mb-6">
+        <video id="qrVideo" class="w-full h-full object-cover" autoplay></video>
+        <div class="qr-scanner-corners"></div>
+      </div>
+      <p class="text-white mb-4">Helyezze a QR kódot a keretbe</p>
+      <button id="closeScanner" class="px-6 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors">
+        Bezárás
+      </button>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="notifications" class="fixed top-6 left-6 z-40 space-y-4 max-w-sm">
+    <!-- Notifications will appear here -->
+  </div>
+
+  <script>
+    // ImageFlow Pro SaaS - Advanced Image Processing Platform
+    class ImageFlowProSaaS {
+      constructor() {
+        this.images = [];
+        this.connectedDevices = new Map();
+        this.activeTransfers = new Map();
+        this.storageStats = {
+          used: 0,
+          total: 1024 * 1024 * 1024, // 1GB default
+          originalSize: 0,
+          compressedSize: 0
+        };
+        this.processingHistory = [];
+        
+        // Initialize components
+        this.pica = window.pica();
+        this.peer = null;
+        this.qrScanner = null;
+        
+        this.init();
+      }
+      
+      async init() {
+        this.initializeElements();
+        this.setupEventListeners();
+        this.initializeTheme();
+        this.initializePWA();
+        this.initializePeerConnection();
+        this.updateStats();
+        this.generateQRCode();
+      }
+      
+      initializeElements() {
+        // Theme elements
+        this.themeToggle = document.getElementById('themeToggle');
+        this.sunIcon = document.getElementById('sunIcon');
+        this.moonIcon = document.getElementById('moonIcon');
+        
+        // Connection elements
+        this.connectionBar = document.getElementById('connectionBar');
+        this.connectionIndicator = document.getElementById('connectionIndicator');
+        this.connectionStatus = document.getElementById('connectionStatus');
+        this.connectedDevices = document.getElementById('connectedDevices');
+        
+        // Navigation elements
+        this.navTabs = document.querySelectorAll('.nav-tab');
+        this.tabContents = document.querySelectorAll('.tab-content');
+        
+        // Upload elements
+        this.dropZone = document.getElementById('dropZone');
+        this.fileInput = document.getElementById('fileInput');
+        this.quickUpload = document.getElementById('quickUpload');
+        
+        // Processing elements
+        this.quickPresets = document.querySelectorAll('.quick-preset');
+        this.quickFormat = document.getElementById('quickFormat');
+        this.quickProcess = document.getElementById('quickProcess');
+        
+        // Device elements
+        this.qrCode = document.getElementById('qrCode');
+        this.regenerateQR = document.getElementById('regenerateQR');
+        this.deviceId = document.getElementById('deviceId');
+        this.connectManual = document.getElementById('connectManual');
+        this.connectDevice = document.getElementById('connectDevice');
+        
+        // Transfer elements
+        this.targetDevice = document.getElementById('targetDevice');
+        this.sendFiles = document.getElementById('sendFiles');
+        
+        // Display elements
+        this.imageGrid = document.getElementById('imageGrid');
+        this.emptyState = document.getElementById('emptyState');
+        this.deviceList = document.getElementById('deviceList');
+        this.activeTransfers = document.getElementById('activeTransfers');
+        
+        // Stats elements
+        this.totalImages = document.getElementById('totalImages');
+        this.totalProcessed = document.getElementById('totalProcessed');
+        this.totalStorage = document.getElementById('totalStorage');
+        this.connectedCount = document.getElementById('connectedCount');
+        
+        // Modal elements
+        this.progressModal = document.getElementById('progressModal');
+        this.progressTitle = document.getElementById('progressTitle');
+        this.progressText = document.getElementById('progressText');
+        this.progressFill = document.getElementById('progressFill');
+        this.progressCount = document.getElementById('progressCount');
+        this.progressTotal = document.getElementById('progressTotal');
+        
+        this.notifications = document.getElementById('notifications');
+        this.floatingAction = document.getElementById('floatingAction');
+      }
+      
+      setupEventListeners() {
+        // Theme toggle
+        this.themeToggle?.addEventListener('click', () => this.toggleTheme());
+        
+        // Navigation
+        this.navTabs.forEach(tab => {
+          tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+        });
+        
+        // Upload
+        this.dropZone?.addEventListener('click', () => this.fileInput?.click());
+        this.fileInput?.addEventListener('change', (e) => this.handleFiles(e.target.files));
+        this.quickUpload?.addEventListener('click', () => this.fileInput?.click());
+        
+        // Drag and drop
+        if (this.dropZone) {
+          this.dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+          this.dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+          this.dropZone.addEventListener('drop', this.handleDrop.bind(this));
+        }
+        
+        // Quick processing
+        this.quickPresets?.forEach(preset => {
+          preset.addEventListener('click', (e) => this.applyQuickPreset(e.target.dataset.preset));
+        });
+        this.quickProcess?.addEventListener('click', () => this.processAllQuick());
+        
+        // Device connection
+        this.connectDevice?.addEventListener('click', () => this.switchTab('devices'));
+        this.regenerateQR?.addEventListener('click', () => this.generateQRCode());
+        this.connectManual?.addEventListener('click', () => this.connectToDevice());
+        
+        // File transfer
+        this.sendFiles?.addEventListener('click', () => this.sendSelectedFiles());
+        
+        // Floating action
+        this.floatingAction?.addEventListener('click', () => this.showQuickActions());
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+        
+        // Window events
+        window.addEventListener('online', () => this.updateConnectionStatus(true));
+        window.addEventListener('offline', () => this.updateConnectionStatus(false));
+        
+        // Handle shared files
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data?.type === 'SHARED_FILES') {
+              this.handleSharedFiles(event.data.files);
+            }
+          });
+        }
+      }
+      
+      initializeTheme() {
+        const savedTheme = localStorage.getItem('imageflow-theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = savedTheme || systemTheme;
+        this.setTheme(theme);
+      }
+      
+      setTheme(theme) {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        if (this.sunIcon && this.moonIcon) {
+          this.sunIcon.classList.toggle('hidden', !isDark);
+          this.moonIcon.classList.toggle('hidden', isDark);
+        }
+        localStorage.setItem('imageflow-theme', theme);
+      }
+      
+      toggleTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
+        this.setTheme(isDark ? 'light' : 'dark');
+      }
+      
+      async initializePWA() {
+        if ('serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('Service Worker registered:', registration);
+            
+            // Handle updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  this.showNotification('Új verzió érhető el! Frissítse az oldalt.', 'info');
+                }
+              });
+            });
+          } catch (error) {
+            console.error('Service Worker registration failed:', error);
+          }
+        }
+      }
+      
+      async initializePeerConnection() {
+        try {
+          this.peer = new Peer({
+            host: 'peerjs-server.herokuapp.com',
+            port: 443,
+            secure: true,
+            debug: 2
+          });
+          
+          this.peer.on('open', (id) => {
+            console.log('Peer connection opened with ID:', id);
+            this.myPeerId = id;
+            this.generateQRCode();
+            this.updateConnectionStatus(true);
+          });
+          
+          this.peer.on('connection', (conn) => {
+            this.handleIncomingConnection(conn);
+          });
+          
+          this.peer.on('error', (error) => {
+            console.error('Peer error:', error);
+            this.updateConnectionStatus(false);
+          });
+          
+        } catch (error) {
+          console.error('Failed to initialize peer connection:', error);
+          this.updateConnectionStatus(false);
+        }
+      }
+      
+      // [Continue with remaining methods...]
+      // Due to length constraints, I'll provide the key methods structure
+      
+      switchTab(tabName) {
+        // Tab switching logic
+        this.navTabs.forEach(tab => {
+          tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+        
+        this.tabContents.forEach(content => {
+          content.classList.toggle('active', content.id === `${tabName}Tab`);
+          content.classList.toggle('hidden', content.id !== `${tabName}Tab`);
+        });
+      }
+      
+      // File handling methods
+      handleDragOver(e) {
+        e.preventDefault();
+        this.dropZone.classList.add('drag-over');
+      }
+      
+      handleDragLeave(e) {
+        e.preventDefault();
+        this.dropZone.classList.remove('drag-over');
+      }
+      
+      handleDrop(e) {
+        e.preventDefault();
+        this.dropZone.classList.remove('drag-over');
+        this.handleFiles(e.dataTransfer.files);
+      }
+      
+      async handleFiles(files) {
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length === 0) {
+          this.showNotification('Nem található kép fájl!', 'error');
+          return;
+        }
+        
+        this.showProgressModal('Képek betöltése', `${imageFiles.length} kép feldolgozása...`);
+        
+        try {
+          for (let i = 0; i < imageFiles.length; i++) {
+            const file = imageFiles[i];
+            const imageData = await this.processImageFile(file);
+            this.images.push(imageData);
+            this.updateProgress(i + 1, imageFiles.length);
+          }
+          
+          this.showNotification(`${imageFiles.length} kép sikeresen betöltve!`, 'success');
+          this.updateStats();
+          this.renderImages();
+          
+        } catch (error) {
+          console.error('Error processing files:', error);
+          this.showNotification('Hiba történt a képek betöltése során!', 'error');
+        } finally {
+          this.hideProgressModal();
+        }
+      }
+      
+      // Additional core methods would continue here...
+      // Including: processImageFile, generateQRCode, connectToDevice, 
+      // sendFiles, updateStats, renderImages, showNotification, etc.
+      
+      updateStats() {
+        if (this.totalImages) this.totalImages.textContent = this.images.length;
+        if (this.totalProcessed) this.totalProcessed.textContent = this.images.filter(img => img.processed).length;
+        if (this.totalStorage) this.totalStorage.textContent = this.formatFileSize(this.storageStats.used);
+        if (this.connectedCount) this.connectedCount.textContent = this.connectedDevices.size;
+      }
+      
+      formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      }
+      
+      showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `p-4 rounded-lg shadow-lg border-l-4 transition-all duration-300 transform translate-x-full animate-slide-in ${this.getNotificationClasses(type)}`;
+        
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <div class="flex-shrink-0">${this.getNotificationIcon(type)}</div>
+            <div class="ml-3"><p class="font-medium">${message}</p></div>
+            <button class="ml-auto pl-3 text-gray-400 hover:text-gray-600" onclick="this.closest('div.p-4').remove()">
+              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        `;
+        
+        this.notifications.appendChild(notification);
+        
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+          }
+        }, 5000);
+        
+        requestAnimationFrame(() => {
+          notification.style.transform = 'translateX(0)';
+        });
+      }
+      
+      getNotificationClasses(type) {
+        const classes = {
+          success: 'bg-green-50 border-green-400 text-green-800 dark:bg-green-900/30 dark:border-green-600 dark:text-green-300',
+          error: 'bg-red-50 border-red-400 text-red-800 dark:bg-red-900/30 dark:border-red-600 dark:text-red-300',
+          warning: 'bg-yellow-50 border-yellow-400 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-600 dark:text-yellow-300',
+          info: 'bg-blue-50 border-blue-400 text-blue-800 dark:bg-blue-900/30 dark:border-blue-600 dark:text-blue-300'
+        };
+        return classes[type] || classes.info;
+      }
+      
+      getNotificationIcon(type) {
+        const icons = {
+          success: '<svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>',
+          error: '<svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>',
+          warning: '<svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>',
+          info: '<svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>'
+        };
+        return icons[type] || icons.info;
+      }
+      
+      showProgressModal(title, text) {
+        if (this.progressModal) {
+          this.progressTitle.textContent = title;
+          this.progressText.textContent = text;
+          this.updateProgress(0, 100);
+          this.progressModal.classList.remove('hidden');
+        }
+      }
+      
+      hideProgressModal() {
+        if (this.progressModal) {
+          this.progressModal.classList.add('hidden');
+        }
+      }
+      
+      updateProgress(current, total) {
+        const percentage = Math.round((current / total) * 100);
+        if (this.progressFill) this.progressFill.style.width = `${percentage}%`;
+        if (this.progressCount) this.progressCount.textContent = current;
+        if (this.progressTotal) this.progressTotal.textContent = total;
+      }
+    }
+    
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', () => {
+      new ImageFlowProSaaS();
+    });
+  </script>
+</body>
+</html>

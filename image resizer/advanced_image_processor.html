@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional Image Processor Pro</title>
+  
+  <!-- External Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      --dark-gradient: linear-gradient(135deg, #232526 0%, #414345 100%);
+    }
+    
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .glass-effect {
+      backdrop-filter: blur(20px);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .dark .glass-effect {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .gradient-text {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hover-lift {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .hover-lift:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .dark .hover-lift:hover {
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .drag-over {
+      background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+      border-color: #4facfe;
+      transform: scale(1.02);
+    }
+    
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60% { content: '...'; }
+      80%, 100% { content: ''; }
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .slide-in-right {
+      animation: slideInRight 0.5s ease-out;
+    }
+    
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .pulse-ring {
+      animation: pulseRing 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+    }
+    
+    @keyframes pulseRing {
+      0% {
+        transform: scale(0.33);
+      }
+      40%, 50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.33);
+      }
+    }
+    
+    .image-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .image-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    .image-card:hover::before {
+      left: 100%;
+    }
+    
+    .progress-bar {
+      position: relative;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-gradient);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      position: relative;
+    }
+    
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background-image: linear-gradient(-45deg, rgba(255, 255, 255, .2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, .2) 75%, transparent 75%, transparent);
+      background-size: 30px 30px;
+      animation: move 2s linear infinite;
+    }
+    
+    @keyframes move {
+      0% {
+        background-position: 0 0;
+      }
+      100% {
+        background-position: 30px 0;
+      }
+    }
+    
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.5);
+      border-radius: 20px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(156, 163, 175, 0.8);
+    }
+    
+    .tooltip {
+      position: relative;
+    }
+    
+    .tooltip::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .tooltip:hover::before {
+      opacity: 1;
+    }
+    
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    
+    .color-picker-preview {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 2px solid white;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .color-picker-preview:hover {
+      transform: scale(1.1);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .selection-checkbox {
+      transform: scale(1.2);
+      accent-color: #667eea;
+    }
+    
+    .advanced-controls {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .advanced-controls.expanded {
+      max-height: 500px;
+    }
+    
+    @media (max-width: 768px) {
+      .image-card {
+        margin-bottom: 1rem;
+      }
+      
+      .hover-lift:hover {
+        transform: none;
+      }
+    }
+    
+    .neon-border {
+      position: relative;
+      border: 2px solid transparent;
+      background: linear-gradient(45deg, #667eea, #764ba2) padding-box,
+                  linear-gradient(45deg, #667eea, #764ba2, #667eea) border-box;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .status-badge.processing {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: white;
+    }
+    
+    .status-badge.completed {
+      background: var(--success-gradient);
+      color: white;
+    }
+    
+    .status-badge.original {
+      background: rgba(156, 163, 175, 0.2);
+      color: #374151;
+    }
+    
+    .dark .status-badge.original {
+      background: rgba(75, 85, 99, 0.3);
+      color: #d1d5db;
+    }
+    
+    .floating-action-button {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px -3px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s ease;
+      z-index: 50;
+    }
+    
+    .floating-action-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 20px 25px -5px rgba(102, 126, 234, 0.6);
+    }
+  </style>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-indigo-900 min-h-screen transition-all duration-500">
+  
+  <!-- Theme Toggle -->
+  <button id="themeToggle" class="fixed top-6 right-6 z-50 p-3 rounded-full glass-effect hover:scale-110 transition-all duration-300 tooltip" data-tooltip="Téma váltása">
+    <svg id="sunIcon" class="w-6 h-6 text-yellow-500 hidden" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+    </svg>
+    <svg id="moonIcon" class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+    </svg>
+  </button>
+
+  <!-- Header -->
+  <header class="relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+    <div class="container mx-auto px-6 py-16 relative">
+      <div class="text-center">
+        <h1 class="text-5xl md:text-7xl font-bold gradient-text mb-4">
+          Image Processor
+          <span class="text-3xl md:text-4xl block mt-2 font-light text-slate-600 dark:text-slate-400">Professional</span>
+        </h1>
+        <p class="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+          Professzionális képfeldolgozás minden igényre. Kiválasztás, átméretezés, formátum konverzió és még sok más.
+        </p>
+        <div class="flex items-center justify-center gap-4 mt-8">
+          <div class="flex items-center gap-2 text-sm text-slate-500">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span id="imageCount">0</span> kép betöltve
+          </div>
+          <div class="flex items-center gap-2 text-sm text-slate-500">
+            <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <span id="selectedCount">0</span> kiválasztva
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-6 pb-12">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      
+      <!-- Control Panel -->
+      <div class="lg:col-span-1">
+        <div class="sticky top-8 space-y-6">
+          
+          <!-- Upload Section -->
+          <div class="glass-effect rounded-2xl p-6 hover-lift">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Képek feltöltése
+            </h2>
+            <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 hover:border-blue-400">
+              <svg class="mx-auto h-12 w-12 text-slate-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <p class="text-lg font-semibold text-slate-600 dark:text-slate-400">Húzza ide a képeket</p>
+              <p class="text-sm text-slate-500 mt-2">vagy kattintson a tallózáshoz</p>
+              <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+            </div>
+          </div>
+
+          <!-- Selection Controls -->
+          <div id="selectionControls" class="glass-effect rounded-2xl p-6 hover-lift hidden">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Kiválasztás
+            </h2>
+            <div class="space-y-3">
+              <button id="selectAll" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Összes kiválasztása
+              </button>
+              <button id="selectNone" class="w-full px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors">
+                Kiválasztás megszüntetése
+              </button>
+              <button id="invertSelection" class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                Kiválasztás megfordítása
+              </button>
+            </div>
+          </div>
+
+          <!-- Batch Operations -->
+          <div id="batchControls" class="glass-effect rounded-2xl p-6 hover-lift hidden">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Csoportos művelet
+            </h2>
+            
+            <div class="space-y-4">
+              <!-- Format Selection -->
+              <div>
+                <label class="block text-sm font-medium mb-2">Cél formátum</label>
+                <select id="batchFormat" class="w-full px-3 py-2 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-lg">
+                  <option value="png">PNG</option>
+                  <option value="jpg">JPG</option>
+                  <option value="webp">WebP</option>
+                </select>
+              </div>
+
+              <!-- Quality Control -->
+              <div id="qualityControl">
+                <label class="block text-sm font-medium mb-2">
+                  Minőség: <span id="qualityValue">90</span>%
+                </label>
+                <input type="range" id="batchQuality" min="10" max="100" value="90" 
+                       class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+              </div>
+
+              <!-- Background Color for JPG -->
+              <div id="backgroundColorControl" class="hidden">
+                <label class="block text-sm font-medium mb-2">JPG háttérszín</label>
+                <div class="flex items-center gap-2">
+                  <div class="color-picker-preview" id="colorPreview" style="background-color: #ffffff;" data-tooltip="Háttérszín választás"></div>
+                  <input type="color" id="backgroundColor" value="#ffffff" class="hidden">
+                  <input type="text" id="backgroundColorText" value="#ffffff" 
+                         class="flex-1 px-3 py-2 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-lg text-sm">
+                </div>
+              </div>
+
+              <!-- Resize Options -->
+              <div>
+                <button id="toggleAdvanced" class="w-full px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors flex items-center justify-between">
+                  <span>Haladó beállítások</span>
+                  <svg id="advancedIcon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div id="advancedControls" class="advanced-controls mt-4 space-y-4">
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-xs font-medium mb-1">Szélesség</label>
+                      <input type="number" id="batchWidth" placeholder="Auto" 
+                             class="w-full px-2 py-1 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium mb-1">Magasság</label>
+                      <input type="number" id="batchHeight" placeholder="Auto" 
+                             class="w-full px-2 py-1 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded text-sm">
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="flex items-center gap-2">
+                      <input type="checkbox" id="maintainAspect" checked class="selection-checkbox">
+                      <span class="text-sm">Képarány megtartása</span>
+                    </label>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Átméretezési mód</label>
+                    <select id="resizeMode" class="w-full px-3 py-2 bg-white/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-600 rounded-lg text-sm">
+                      <option value="fit">Beleférés (Fit)</option>
+                      <option value="fill">Kitöltés (Fill)</option>
+                      <option value="stretch">Nyújtás (Stretch)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <button id="processSelected" class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg">
+                  Kiválasztottak feldolgozása
+                </button>
+                <button id="downloadSelected" class="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all duration-300 font-semibold shadow-lg">
+                  ZIP letöltés
+                </button>
+                <button id="downloadIndividual" class="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+                  Egyenként letöltés
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clear All -->
+          <div id="clearSection" class="glass-effect rounded-2xl p-6 hover-lift hidden">
+            <button id="clearAll" class="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg hover:from-red-700 hover:to-pink-700 transition-all duration-300 font-semibold shadow-lg">
+              <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Összes törlése
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Grid -->
+      <div class="lg:col-span-3">
+        <div id="imageGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <!-- Images will be rendered here -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-20">
+          <svg class="mx-auto h-24 w-24 text-slate-400 mb-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <h3 class="text-xl font-semibold text-slate-600 dark:text-slate-400 mb-2">Nincs feltöltött kép</h3>
+          <p class="text-slate-500 max-w-md mx-auto">Húzzon ide képeket, vagy kattintson a feltöltés gombra a kezdéshez.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Modal -->
+  <div id="progressModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+      <div class="text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <h3 id="progressTitle" class="text-xl font-semibold mb-2">Feldolgozás...</h3>
+        <p id="progressText" class="text-slate-600 dark:text-slate-400 mb-4">Kérjük várjon...</p>
+        <div class="progress-bar mb-4">
+          <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="text-sm text-slate-500">
+          <span id="progressCount">0</span> / <span id="progressTotal">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+          <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        </div>
+        <h3 id="confirmTitle" class="text-lg font-semibold mb-2">Megerősítés</h3>
+        <p id="confirmText" class="text-slate-600 dark:text-slate-400 mb-6">Biztosan folytatni szeretné?</p>
+        <div class="flex gap-3">
+          <button id="confirmCancel" class="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+            Mégse
+          </button>
+          <button id="confirmOk" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+            Igen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div id="notifications" class="fixed top-6 left-6 z-40 space-y-4 max-w-sm">
+    <!-- Notifications will appear here -->
+  </div>
+
+  <!-- Floating Action Button -->
+  <button id="floatingActionBtn" class="floating-action-button hidden tooltip" data-tooltip="Gyors műveletek">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+    </svg>
+  </button>
+
+  <script>
+    class AdvancedImageProcessor {
+      constructor() {
+        this.images = [];
+        this.selectedImages = new Set();
+        this.processing = false;
+        this.pica = window.pica();
+        
+        this.init();
+      }
+      
+      init() {
+        this.initializeElements();
+        this.setupEventListeners();
+        this.initializeTheme();
+        this.updateCounts();
+      }
+      
+      initializeElements() {
+        // Theme elements
+        this.themeToggle = document.getElementById('themeToggle');
+        this.sunIcon = document.getElementById('sunIcon');
+        this.moonIcon = document.getElementById('moonIcon');
+        
+        // Upload elements
+        this.dropZone = document.getElementById('dropZone');
+        this.fileInput = document.getElementById('fileInput');
+        
+        // Control elements
+        this.selectionControls = document.getElementById('selectionControls');
+        this.batchControls = document.getElementById('batchControls');
+        this.clearSection = document.getElementById('clearSection');
+        this.selectAll = document.getElementById('selectAll');
+        this.selectNone = document.getElementById('selectNone');
+        this.invertSelection = document.getElementById('invertSelection');
+        
+        // Batch operation elements
+        this.batchFormat = document.getElementById('batchFormat');
+        this.batchQuality = document.getElementById('batchQuality');
+        this.qualityValue = document.getElementById('qualityValue');
+        this.qualityControl = document.getElementById('qualityControl');
+        this.backgroundColorControl = document.getElementById('backgroundColorControl');
+        this.backgroundColor = document.getElementById('backgroundColor');
+        this.backgroundColorText = document.getElementById('backgroundColorText');
+        this.colorPreview = document.getElementById('colorPreview');
+        this.batchWidth = document.getElementById('batchWidth');
+        this.batchHeight = document.getElementById('batchHeight');
+        this.maintainAspect = document.getElementById('maintainAspect');
+        this.resizeMode = document.getElementById('resizeMode');
+        
+        // Advanced controls
+        this.toggleAdvanced = document.getElementById('toggleAdvanced');
+        this.advancedControls = document.getElementById('advancedControls');
+        this.advancedIcon = document.getElementById('advancedIcon');
+        
+        // Action buttons
+        this.processSelected = document.getElementById('processSelected');
+        this.downloadSelected = document.getElementById('downloadSelected');
+        this.downloadIndividual = document.getElementById('downloadIndividual');
+        this.clearAll = document.getElementById('clearAll');
+        
+        // Display elements
+        this.imageGrid = document.getElementById('imageGrid');
+        this.emptyState = document.getElementById('emptyState');
+        this.imageCount = document.getElementById('imageCount');
+        this.selectedCount = document.getElementById('selectedCount');
+        
+        // Modal elements
+        this.progressModal = document.getElementById('progressModal');
+        this.progressTitle = document.getElementById('progressTitle');
+        this.progressText = document.getElementById('progressText');
+        this.progressFill = document.getElementById('progressFill');
+        this.progressCount = document.getElementById('progressCount');
+        this.progressTotal = document.getElementById('progressTotal');
+        
+        this.confirmModal = document.getElementById('confirmModal');
+        this.confirmTitle = document.getElementById('confirmTitle');
+        this.confirmText = document.getElementById('confirmText');
+        this.confirmOk = document.getElementById('confirmOk');
+        this.confirmCancel = document.getElementById('confirmCancel');
+        
+        this.notifications = document.getElementById('notifications');
+        this.floatingActionBtn = document.getElementById('floatingActionBtn');
+      }
+      
+      setupEventListeners() {
+        // Theme toggle
+        this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        
+        // File upload
+        this.dropZone.addEventListener('click', () => this.fileInput.click());
+        this.fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+        
+        // Drag and drop
+        this.dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+        this.dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+        this.dropZone.addEventListener('drop', this.handleDrop.bind(this));
+        
+        // Selection controls
+        this.selectAll.addEventListener('click', () => this.selectAllImages());
+        this.selectNone.addEventListener('click', () => this.selectNoImages());
+        this.invertSelection.addEventListener('click', () => this.invertImageSelection());
+        
+        // Batch controls
+        this.batchFormat.addEventListener('change', () => this.updateFormatControls());
+        this.batchQuality.addEventListener('input', () => this.updateQualityDisplay());
+        this.colorPreview.addEventListener('click', () => this.backgroundColor.click());
+        this.backgroundColor.addEventListener('change', () => this.updateColorDisplay());
+        this.backgroundColorText.addEventListener('input', () => this.updateColorFromText());
+        
+        // Advanced controls
+        this.toggleAdvanced.addEventListener('click', () => this.toggleAdvancedControls());
+        
+        // Action buttons
+        this.processSelected.addEventListener('click', () => this.processSelectedImages());
+        this.downloadSelected.addEventListener('click', () => this.downloadSelectedAsZip());
+        this.downloadIndividual.addEventListener('click', () => this.downloadSelectedIndividually());
+        this.clearAll.addEventListener('click', () => this.confirmClearAll());
+        
+        // Modal controls
+        this.confirmCancel.addEventListener('click', () => this.hideConfirmModal());
+        
+        // Image grid events (delegated)
+        this.imageGrid.addEventListener('change', (e) => {
+          if (e.target.type === 'checkbox' && e.target.classList.contains('image-checkbox')) {
+            this.toggleImageSelection(e.target.dataset.imageId);
+          }
+        });
+        
+        this.imageGrid.addEventListener('click', (e) => {
+          if (e.target.closest('[data-action]')) {
+            const action = e.target.closest('[data-action]').dataset.action;
+            const imageId = e.target.closest('[data-action]').dataset.imageId;
+            this.handleImageAction(action, imageId);
+          }
+        });
+        
+        // Floating action button
+        this.floatingActionBtn.addEventListener('click', () => this.showQuickActions());
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+      }
+      
+      initializeTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = savedTheme || systemTheme;
+        this.setTheme(theme);
+      }
+      
+      setTheme(theme) {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        this.sunIcon.classList.toggle('hidden', !isDark);
+        this.moonIcon.classList.toggle('hidden', isDark);
+        localStorage.setItem('theme', theme);
+      }
+      
+      toggleTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
+        this.setTheme(isDark ? 'light' : 'dark');
+      }
+      
+      handleDragOver(e) {
+        e.preventDefault();
+        this.dropZone.classList.add('drag-over');
+      }
+      
+      handleDragLeave(e) {
+        e.preventDefault();
+        this.dropZone.classList.remove('drag-over');
+      }
+      
+      handleDrop(e) {
+        e.preventDefault();
+        this.dropZone.classList.remove('drag-over');
+        this.handleFiles(e.dataTransfer.files);
+      }
+      
+      async handleFiles(files) {
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length === 0) {
+          this.showNotification('Nem található kép fájl!', 'error');
+          return;
+        }
+        
+        this.showProgressModal('Képek betöltése', `${imageFiles.length} kép feldolgozása...`);
+        
+        try {
+          for (let i = 0; i < imageFiles.length; i++) {
+            const file = imageFiles[i];
+            const imageData = await this.processImageFile(file);
+            this.images.push(imageData);
+            
+            this.updateProgress(i + 1, imageFiles.length);
+          }
+          
+          this.showNotification(`${imageFiles.length} kép sikeresen betöltve!`, 'success');
+        } catch (error) {
+          console.error('Error processing files:', error);
+          this.showNotification('Hiba történt a képek betöltése során!', 'error');
+        } finally {
+          this.hideProgressModal();
+          this.renderImages();
+          this.updateCounts();
+          this.showControls();
+        }
+      }
+      
+      async processImageFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const imageData = {
+                id: this.generateId(),
+                file: file,
+                originalUrl: e.target.result,
+                processedUrl: null,
+                originalWidth: img.width,
+                originalHeight: img.height,
+                processedWidth: null,
+                processedHeight: null,
+                status: 'original',
+                selected: false
+              };
+              resolve(imageData);
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+      
+      generateId() {
+        return 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      }
+      
+      renderImages() {
+        if (this.images.length === 0) {
+          this.imageGrid.innerHTML = '';
+          this.emptyState.classList.remove('hidden');
+          this.hideControls();
+          return;
+        }
+        
+        this.emptyState.classList.add('hidden');
+        this.imageGrid.innerHTML = this.images.map(image => this.createImageCard(image)).join('');
+      }
+      
+      createImageCard(image) {
+        const displayUrl = image.processedUrl || image.originalUrl;
+        const displayWidth = image.processedWidth || image.originalWidth;
+        const displayHeight = image.processedHeight || image.originalHeight;
+        const isSelected = this.selectedImages.has(image.id);
+        const statusBadge = this.getStatusBadge(image.status);
+        
+        return `
+          <div class="image-card fade-in" data-image-id="${image.id}">
+            <div class="relative">
+              <!-- Selection checkbox -->
+              <div class="absolute top-4 left-4 z-10">
+                <label class="flex items-center">
+                  <input type="checkbox" class="image-checkbox selection-checkbox" 
+                         data-image-id="${image.id}" ${isSelected ? 'checked' : ''}>
+                </label>
+              </div>
+              
+              <!-- Status badge -->
+              <div class="absolute top-4 right-4 z-10">
+                ${statusBadge}
+              </div>
+              
+              <!-- Image -->
+              <div class="aspect-video bg-slate-200 dark:bg-slate-700 rounded-t-2xl overflow-hidden">
+                <img src="${displayUrl}" alt="${image.file.name}" 
+                     class="w-full h-full object-cover" loading="lazy">
+              </div>
+            </div>
+            
+            <div class="p-6">
+              <!-- Image info -->
+              <h3 class="font-semibold text-lg mb-2 truncate" title="${image.file.name}">
+                ${image.file.name}
+              </h3>
+              
+              <div class="text-sm text-slate-600 dark:text-slate-400 space-y-1 mb-4">
+                <div class="flex justify-between">
+                  <span>Eredeti:</span>
+                  <span>${image.originalWidth} × ${image.originalHeight}</span>
+                </div>
+                ${image.processedUrl ? `
+                  <div class="flex justify-between text-green-600 dark:text-green-400">
+                    <span>Feldolgozott:</span>
+                    <span>${displayWidth} × ${displayHeight}</span>
+                  </div>
+                ` : ''}
+                <div class="flex justify-between">
+                  <span>Méret:</span>
+                  <span>${this.formatFileSize(image.file.size)}</span>
+                </div>
+              </div>
+              
+              <!-- Individual actions -->
+              <div class="flex gap-2">
+                <button class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        data-action="preview" data-image-id="${image.id}">
+                  Előnézet
+                </button>
+                ${image.processedUrl ? `
+                  <button class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          data-action="download" data-image-id="${image.id}" title="Letöltés">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                  <button class="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                          data-action="reset" data-image-id="${image.id}" title="Visszaállítás">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                ` : ''}
+                <button class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        data-action="remove" data-image-id="${image.id}" title="Törlés">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      getStatusBadge(status) {
+        switch (status) {
+          case 'processing':
+            return `<div class="status-badge processing">
+              <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              Feldolgozás
+            </div>`;
+          case 'completed':
+            return `<div class="status-badge completed">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              Kész
+            </div>`;
+          default:
+            return `<div class="status-badge original">Eredeti</div>`;
+        }
+      }
+      
+      formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      }
+      
+      showControls() {
+        this.selectionControls.classList.remove('hidden');
+        this.batchControls.classList.remove('hidden');
+        this.clearSection.classList.remove('hidden');
+        this.floatingActionBtn.classList.remove('hidden');
+      }
+      
+      hideControls() {
+        this.selectionControls.classList.add('hidden');
+        this.batchControls.classList.add('hidden');
+        this.clearSection.classList.add('hidden');
+        this.floatingActionBtn.classList.add('hidden');
+      }
+      
+      selectAllImages() {
+        this.images.forEach(image => {
+          this.selectedImages.add(image.id);
+          image.selected = true;
+        });
+        this.updateSelectionUI();
+        this.updateCounts();
+      }
+      
+      selectNoImages() {
+        this.selectedImages.clear();
+        this.images.forEach(image => image.selected = false);
+        this.updateSelectionUI();
+        this.updateCounts();
+      }
+      
+      invertImageSelection() {
+        this.images.forEach(image => {
+          if (this.selectedImages.has(image.id)) {
+            this.selectedImages.delete(image.id);
+            image.selected = false;
+          } else {
+            this.selectedImages.add(image.id);
+            image.selected = true;
+          }
+        });
+        this.updateSelectionUI();
+        this.updateCounts();
+      }
+      
+      toggleImageSelection(imageId) {
+        const image = this.images.find(img => img.id === imageId);
+        if (!image) return;
+        
+        if (this.selectedImages.has(imageId)) {
+          this.selectedImages.delete(imageId);
+          image.selected = false;
+        } else {
+          this.selectedImages.add(imageId);
+          image.selected = true;
+        }
+        
+        this.updateCounts();
+      }
+      
+      updateSelectionUI() {
+        const checkboxes = document.querySelectorAll('.image-checkbox');
+        checkboxes.forEach(checkbox => {
+          const imageId = checkbox.dataset.imageId;
+          checkbox.checked = this.selectedImages.has(imageId);
+        });
+      }
+      
+      updateCounts() {
+        this.imageCount.textContent = this.images.length;
+        this.selectedCount.textContent = this.selectedImages.size;
+      }
+      
+      updateFormatControls() {
+        const format = this.batchFormat.value;
+        this.qualityControl.style.display = format === 'png' ? 'none' : 'block';
+        this.backgroundColorControl.style.display = format === 'jpg' ? 'block' : 'none';
+      }
+      
+      updateQualityDisplay() {
+        this.qualityValue.textContent = this.batchQuality.value;
+      }
+      
+      updateColorDisplay() {
+        const color = this.backgroundColor.value;
+        this.colorPreview.style.backgroundColor = color;
+        this.backgroundColorText.value = color;
+      }
+      
+      updateColorFromText() {
+        const color = this.backgroundColorText.value;
+        if (/^#[0-9A-F]{6}$/i.test(color)) {
+          this.backgroundColor.value = color;
+          this.colorPreview.style.backgroundColor = color;
+        }
+      }
+      
+      toggleAdvancedControls() {
+        const isExpanded = this.advancedControls.classList.contains('expanded');
+        this.advancedControls.classList.toggle('expanded');
+        this.advancedIcon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+      }
+      
+      async processSelectedImages() {
+        if (this.selectedImages.size === 0) {
+          this.showNotification('Nincs kiválasztott kép!', 'warning');
+          return;
+        }
+        
+        if (this.processing) return;
+        
+        const selectedImages = this.images.filter(img => this.selectedImages.has(img.id));
+        const format = this.batchFormat.value;
+        const quality = parseInt(this.batchQuality.value);
+        const backgroundColor = this.backgroundColor.value;
+        const targetWidth = this.batchWidth.value ? parseInt(this.batchWidth.value) : null;
+        const targetHeight = this.batchHeight.value ? parseInt(this.batchHeight.value) : null;
+        const maintainAspect = this.maintainAspect.checked;
+        const resizeMode = this.resizeMode.value;
+        
+        this.processing = true;
+        this.showProgressModal('Képek feldolgozása', `${selectedImages.length} kép feldolgozása folyamatban...`);
+        
+        try {
+          for (let i = 0; i < selectedImages.length; i++) {
+            const image = selectedImages[i];
+            this.updateImageStatus(image.id, 'processing');
+            
+            let processedUrl = image.originalUrl;
+            let processedWidth = image.originalWidth;
+            let processedHeight = image.originalHeight;
+            
+            // Resize if dimensions are specified
+            if (targetWidth || targetHeight) {
+              const dimensions = this.calculateDimensions(
+                image.originalWidth,
+                image.originalHeight,
+                targetWidth,
+                targetHeight,
+                maintainAspect,
+                resizeMode
+              );
+              
+              processedUrl = await this.resizeImage(image.originalUrl, dimensions.width, dimensions.height);
+              processedWidth = dimensions.width;
+              processedHeight = dimensions.height;
+            }
+            
+            // Convert format if needed
+            if (format !== this.getImageFormat(image.file.name)) {
+              processedUrl = await this.convertImageFormat(processedUrl, format, quality, backgroundColor);
+            }
+            
+            // Update image data
+            image.processedUrl = processedUrl;
+            image.processedWidth = processedWidth;
+            image.processedHeight = processedHeight;
+            image.status = 'completed';
+            
+            this.updateImageStatus(image.id, 'completed');
+            this.updateProgress(i + 1, selectedImages.length);
+          }
+          
+          this.showNotification(`${selectedImages.length} kép sikeresen feldolgozva!`, 'success');
+        } catch (error) {
+          console.error('Error processing images:', error);
+          this.showNotification('Hiba történt a képek feldolgozása során!', 'error');
+        } finally {
+          this.processing = false;
+          this.hideProgressModal();
+          this.renderImages();
+        }
+      }
+      
+      calculateDimensions(originalWidth, originalHeight, targetWidth, targetHeight, maintainAspect, resizeMode) {
+        if (!targetWidth && !targetHeight) {
+          return { width: originalWidth, height: originalHeight };
+        }
+        
+        const aspectRatio = originalWidth / originalHeight;
+        
+        if (maintainAspect) {
+          if (targetWidth && targetHeight) {
+            // Both dimensions specified - choose based on resize mode
+            switch (resizeMode) {
+              case 'fit':
+                // Fit within bounds
+                const widthRatio = targetWidth / originalWidth;
+                const heightRatio = targetHeight / originalHeight;
+                const ratio = Math.min(widthRatio, heightRatio);
+                return {
+                  width: Math.round(originalWidth * ratio),
+                  height: Math.round(originalHeight * ratio)
+                };
+              case 'fill':
+                // Fill bounds (may crop)
+                const fillWidthRatio = targetWidth / originalWidth;
+                const fillHeightRatio = targetHeight / originalHeight;
+                const fillRatio = Math.max(fillWidthRatio, fillHeightRatio);
+                return {
+                  width: Math.round(originalWidth * fillRatio),
+                  height: Math.round(originalHeight * fillRatio)
+                };
+              case 'stretch':
+                return { width: targetWidth, height: targetHeight };
+            }
+          } else if (targetWidth) {
+            return {
+              width: targetWidth,
+              height: Math.round(targetWidth / aspectRatio)
+            };
+          } else {
+            return {
+              width: Math.round(targetHeight * aspectRatio),
+              height: targetHeight
+            };
+          }
+        } else {
+          return {
+            width: targetWidth || originalWidth,
+            height: targetHeight || originalHeight
+          };
+        }
+      }
+      
+      async resizeImage(imageUrl, width, height) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = async () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              
+              await this.pica.resize(img, canvas, {
+                alpha: true,
+                unsharpAmount: 80,
+                unsharpRadius: 0.6,
+                unsharpThreshold: 2
+              });
+              
+              resolve(canvas.toDataURL('image/png'));
+            } catch (error) {
+              reject(error);
+            }
+          };
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+      }
+      
+      async convertImageFormat(imageUrl, format, quality, backgroundColor) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            // Set background color for JPG
+            if (format === 'jpg') {
+              ctx.fillStyle = backgroundColor;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            ctx.drawImage(img, 0, 0);
+            
+            const mimeType = format === 'jpg' ? 'image/jpeg' : `image/${format}`;
+            const qualityValue = format === 'png' ? undefined : quality / 100;
+            
+            resolve(canvas.toDataURL(mimeType, qualityValue));
+          };
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+      }
+      
+      getImageFormat(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        switch (ext) {
+          case 'jpg':
+          case 'jpeg':
+            return 'jpg';
+          case 'png':
+            return 'png';
+          case 'webp':
+            return 'webp';
+          default:
+            return 'unknown';
+        }
+      }
+      
+      updateImageStatus(imageId, status) {
+        const image = this.images.find(img => img.id === imageId);
+        if (image) {
+          image.status = status;
+          const card = document.querySelector(`[data-image-id="${imageId}"]`);
+          if (card) {
+            const statusBadge = card.querySelector('.status-badge');
+            if (statusBadge) {
+              statusBadge.outerHTML = this.getStatusBadge(status);
+            }
+          }
+        }
+      }
+      
+      async downloadSelectedAsZip() {
+        if (this.selectedImages.size === 0) {
+          this.showNotification('Nincs kiválasztott kép!', 'warning');
+          return;
+        }
+        
+        const selectedImages = this.images.filter(img => this.selectedImages.has(img.id));
+        const format = this.batchFormat.value;
+        
+        this.showProgressModal('ZIP készítése', 'Fájlok összecsomagolása...');
+        
+        try {
+          const zip = new JSZip();
+          
+          for (let i = 0; i < selectedImages.length; i++) {
+            const image = selectedImages[i];
+            const imageUrl = image.processedUrl || image.originalUrl;
+            const width = image.processedWidth || image.originalWidth;
+            const height = image.processedHeight || image.originalHeight;
+            
+            // Convert to blob
+            const blob = await this.dataUrlToBlob(imageUrl, format);
+            
+            // Generate filename
+            const baseName = image.file.name.replace(/\.[^/.]+$/, '');
+            const filename = `${baseName}_${width}x${height}.${format}`;
+            
+            zip.file(filename, blob);
+            this.updateProgress(i + 1, selectedImages.length);
+          }
+          
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+          saveAs(zipBlob, `processed_images_${timestamp}.zip`);
+          
+          this.showNotification('ZIP fájl sikeresen létrehozva!', 'success');
+        } catch (error) {
+          console.error('Error creating ZIP:', error);
+          this.showNotification('Hiba történt a ZIP fájl létrehozása során!', 'error');
+        } finally {
+          this.hideProgressModal();
+        }
+      }
+      
+      async downloadSelectedIndividually() {
+        if (this.selectedImages.size === 0) {
+          this.showNotification('Nincs kiválasztott kép!', 'warning');
+          return;
+        }
+        
+        const selectedImages = this.images.filter(img => this.selectedImages.has(img.id));
+        const format = this.batchFormat.value;
+        
+        this.showProgressModal('Egyenkénti letöltés', 'Fájlok letöltése...');
+        
+        try {
+          for (let i = 0; i < selectedImages.length; i++) {
+            const image = selectedImages[i];
+            await this.downloadSingleImage(image, format);
+            this.updateProgress(i + 1, selectedImages.length);
+            
+            // Small delay between downloads
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          
+          this.showNotification(`${selectedImages.length} fájl sikeresen letöltve!`, 'success');
+        } catch (error) {
+          console.error('Error downloading files:', error);
+          this.showNotification('Hiba történt a fájlok letöltése során!', 'error');
+        } finally {
+          this.hideProgressModal();
+        }
+      }
+      
+      async downloadSingleImage(image, format) {
+        const imageUrl = image.processedUrl || image.originalUrl;
+        const width = image.processedWidth || image.originalWidth;
+        const height = image.processedHeight || image.originalHeight;
+        
+        const blob = await this.dataUrlToBlob(imageUrl, format);
+        const baseName = image.file.name.replace(/\.[^/.]+$/, '');
+        const filename = `${baseName}_${width}x${height}.${format}`;
+        
+        saveAs(blob, filename);
+      }
+      
+      async dataUrlToBlob(dataUrl, format) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            // Set white background for JPG
+            if (format === 'jpg') {
+              ctx.fillStyle = this.backgroundColor.value;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            ctx.drawImage(img, 0, 0);
+            
+            canvas.toBlob((blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to create blob'));
+              }
+            }, format === 'jpg' ? 'image/jpeg' : `image/${format}`, 
+            format === 'png' ? undefined : parseInt(this.batchQuality.value) / 100);
+          };
+          img.onerror = reject;
+          img.src = dataUrl;
+        });
+      }
+      
+      handleImageAction(action, imageId) {
+        const image = this.images.find(img => img.id === imageId);
+        if (!image) return;
+        
+        switch (action) {
+          case 'preview':
+            this.showImagePreview(image);
+            break;
+          case 'download':
+            this.downloadSingleImage(image, this.getImageFormat(image.file.name));
+            break;
+          case 'reset':
+            this.resetImage(image);
+            break;
+          case 'remove':
+            this.confirmRemoveImage(imageId);
+            break;
+        }
+      }
+      
+      showImagePreview(image) {
+        // Create and show image preview modal
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+          <div class="max-w-4xl max-h-full bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-700">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold">${image.file.name}</h3>
+                <button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" onclick="this.closest('.fixed').remove()">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="p-6">
+              <img src="${image.processedUrl || image.originalUrl}" alt="${image.file.name}" 
+                   class="max-w-full max-h-96 mx-auto rounded-lg">
+              <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span class="font-medium">Eredeti méret:</span>
+                  <span class="text-slate-600 dark:text-slate-400">${image.originalWidth} × ${image.originalHeight}</span>
+                </div>
+                <div>
+                  <span class="font-medium">Fájl méret:</span>
+                  <span class="text-slate-600 dark:text-slate-400">${this.formatFileSize(image.file.size)}</span>
+                </div>
+                ${image.processedUrl ? `
+                  <div>
+                    <span class="font-medium">Feldolgozott méret:</span>
+                    <span class="text-green-600 dark:text-green-400">${image.processedWidth} × ${image.processedHeight}</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.remove();
+          }
+        });
+      }
+      
+      resetImage(image) {
+        image.processedUrl = null;
+        image.processedWidth = null;
+        image.processedHeight = null;
+        image.status = 'original';
+        
+        this.renderImages();
+        this.showNotification('Kép visszaállítva eredeti állapotába!', 'success');
+      }
+      
+      confirmRemoveImage(imageId) {
+        const image = this.images.find(img => img.id === imageId);
+        this.showConfirmModal(
+          'Kép törlése',
+          `Biztosan törölni szeretné a "${image.file.name}" képet?`,
+          () => this.removeImage(imageId)
+        );
+      }
+      
+      removeImage(imageId) {
+        this.images = this.images.filter(img => img.id !== imageId);
+        this.selectedImages.delete(imageId);
+        this.renderImages();
+        this.updateCounts();
+        this.showNotification('Kép törölve!', 'success');
+        
+        if (this.images.length === 0) {
+          this.hideControls();
+        }
+      }
+      
+      confirmClearAll() {
+        this.showConfirmModal(
+          'Összes kép törlése',
+          `Biztosan törölni szeretné mind a ${this.images.length} képet?`,
+          () => this.clearAllImages()
+        );
+      }
+      
+      clearAllImages() {
+        this.images = [];
+        this.selectedImages.clear();
+        this.fileInput.value = '';
+        this.renderImages();
+        this.updateCounts();
+        this.hideControls();
+        this.showNotification('Minden kép törölve!', 'success');
+      }
+      
+      showProgressModal(title, text) {
+        this.progressTitle.textContent = title;
+        this.progressText.textContent = text;
+        this.updateProgress(0, 100);
+        this.progressModal.classList.remove('hidden');
+      }
+      
+      hideProgressModal() {
+        this.progressModal.classList.add('hidden');
+      }
+      
+      updateProgress(current, total) {
+        const percentage = Math.round((current / total) * 100);
+        this.progressFill.style.width = `${percentage}%`;
+        this.progressCount.textContent = current;
+        this.progressTotal.textContent = total;
+      }
+      
+      showConfirmModal(title, text, onConfirm) {
+        this.confirmTitle.textContent = title;
+        this.confirmText.textContent = text;
+        this.confirmOk.onclick = () => {
+          this.hideConfirmModal();
+          onConfirm();
+        };
+        this.confirmModal.classList.remove('hidden');
+      }
+      
+      hideConfirmModal() {
+        this.confirmModal.classList.add('hidden');
+      }
+      
+      showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `p-4 rounded-lg shadow-lg border-l-4 transition-all duration-300 transform translate-x-full slide-in-right ${this.getNotificationClasses(type)}`;
+        
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              ${this.getNotificationIcon(type)}
+            </div>
+            <div class="ml-3">
+              <p class="font-medium">${message}</p>
+            </div>
+            <div class="ml-auto pl-3">
+              <button class="inline-flex text-gray-400 hover:text-gray-600 transition-colors" onclick="this.closest('div.p-4').remove()">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+        
+        this.notifications.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.style.transform = 'translateX(100%)';
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+          }
+        }, 5000);
+        
+        // Remove translate to show
+        requestAnimationFrame(() => {
+          notification.style.transform = 'translateX(0)';
+        });
+      }
+      
+      getNotificationClasses(type) {
+        const classes = {
+          success: 'bg-green-50 border-green-400 text-green-800 dark:bg-green-900/30 dark:border-green-600 dark:text-green-300',
+          error: 'bg-red-50 border-red-400 text-red-800 dark:bg-red-900/30 dark:border-red-600 dark:text-red-300',
+          warning: 'bg-yellow-50 border-yellow-400 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-600 dark:text-yellow-300',
+          info: 'bg-blue-50 border-blue-400 text-blue-800 dark:bg-blue-900/30 dark:border-blue-600 dark:text-blue-300'
+        };
+        return classes[type] || classes.info;
+      }
+      
+      getNotificationIcon(type) {
+        const icons = {
+          success: '<svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>',
+          error: '<svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>',
+          warning: '<svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>',
+          info: '<svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>'
+        };
+        return icons[type] || icons.info;
+      }
+      
+      showQuickActions() {
+        // Quick actions menu implementation
+        this.showNotification('Gyors műveletek hamarosan!', 'info');
+      }
+      
+      handleKeyboardShortcuts(e) {
+        if (e.ctrlKey || e.metaKey) {
+          switch (e.key) {
+            case 'a':
+              e.preventDefault();
+              this.selectAllImages();
+              break;
+            case 'd':
+              e.preventDefault();
+              this.selectNoImages();
+              break;
+            case 'i':
+              e.preventDefault();
+              this.invertImageSelection();
+              break;
+            case 'Delete':
+            case 'Backspace':
+              e.preventDefault();
+              if (this.selectedImages.size > 0) {
+                this.confirmClearSelected();
+              }
+              break;
+          }
+        }
+        
+        if (e.key === 'Escape') {
+          this.hideConfirmModal();
+          this.hideProgressModal();
+        }
+      }
+      
+      confirmClearSelected() {
+        this.showConfirmModal(
+          'Kiválasztott képek törlése',
+          `Biztosan törölni szeretné a ${this.selectedImages.size} kiválasztott képet?`,
+          () => this.removeSelectedImages()
+        );
+      }
+      
+      removeSelectedImages() {
+        this.images = this.images.filter(img => !this.selectedImages.has(img.id));
+        this.selectedImages.clear();
+        this.renderImages();
+        this.updateCounts();
+        this.showNotification('Kiválasztott képek törölve!', 'success');
+        
+        if (this.images.length === 0) {
+          this.hideControls();
+        }
+      }
+    }
+    
+    // Initialize the application when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      new AdvancedImageProcessor();
+    });
+  </script>
+</body>
+</html>
