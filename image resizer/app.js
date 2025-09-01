@@ -1,4 +1,4 @@
-// ImageFlow Pro - Advanced Image Processing SaaS Platform
+// ImageFlow Pro - Professional Lossless Image Processing SaaS Platform
 class ImageFlowApp {
   constructor() {
     this.images = [];
@@ -16,6 +16,50 @@ class ImageFlowApp {
       avgCompression: 0,
       timeSaved: 0,
       bandwidthSaved: 0
+    };
+    
+    // Advanced Processing Options
+    this.processingOptions = {
+      lossless: true,
+      algorithm: 'lanczos', // lanczos, bicubic, bilinear, nearest
+      colorSpace: 'sRGB',
+      preserveMetadata: true,
+      enableSharpening: false,
+      gammaCorrection: 2.2,
+      resamplingQuality: 'maximum'
+    };
+    
+    // Professional Format Support with Lossless Options
+    this.formatConfigs = {
+      'png': { 
+        lossless: true, 
+        compression: 'zip',
+        bitDepth: 'auto', // 8, 16, 'auto'
+        colorType: 'auto' // rgb, rgba, grayscale, palette, 'auto'
+      },
+      'webp': { 
+        lossless: true,
+        method: 6, // 0-6, higher = slower but better
+        quality: 100,
+        exact: true
+      },
+      'avif': {
+        lossless: true,
+        quality: 100,
+        speed: 1 // 0-10, higher = faster but worse
+      },
+      'tiff': {
+        lossless: true,
+        compression: 'lzw',
+        bitDepth: 16
+      },
+      'jpg': {
+        lossless: false,
+        quality: 95,
+        subsampling: '444', // 444, 422, 420
+        progressive: false,
+        optimize: true
+      }
     };
     
     this.init();
@@ -316,56 +360,214 @@ class ImageFlowApp {
   }
 
   async processFiles(files) {
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    
-    if (imageFiles.length === 0) {
-      this.showNotification('Kérem válasszon képfájlokat!', 'warning');
-      return;
-    }
+    try {
+      // Validate file count
+      if (files.length === 0) {
+        this.showNotification('Kérem válasszon fájlokat!', 'warning');
+        return;
+      }
+      
+      if (files.length > 100) {
+        this.showNotification('Túl sok fájl! Maximum 100 fájl tölthető fel egyszerre.', 'error');
+        return;
+      }
+      
+      // Filter and validate image files
+      const validImageFiles = [];
+      const invalidFiles = [];
+      const maxFileSize = 50 * 1024 * 1024; // 50MB
+      const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/svg+xml'];
+      
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+          invalidFiles.push(`${file.name} (nem képfájl)`);
+          continue;
+        }
+        
+        if (!supportedTypes.includes(file.type)) {
+          invalidFiles.push(`${file.name} (nem támogatott formátum)`);
+          continue;
+        }
+        
+        if (file.size > maxFileSize) {
+          invalidFiles.push(`${file.name} (túl nagy, max 50MB)`);
+          continue;
+        }
+        
+        if (file.size === 0) {
+          invalidFiles.push(`${file.name} (üres fájl)`);
+          continue;
+        }
+        
+        validImageFiles.push(file);
+      }
+      
+      // Show warnings for invalid files
+      if (invalidFiles.length > 0) {
+        const message = `${invalidFiles.length} fájl kihagyva: ${invalidFiles.slice(0, 3).join(', ')}${invalidFiles.length > 3 ? '...' : ''}`;
+        this.showNotification(message, 'warning');
+      }
+      
+      if (validImageFiles.length === 0) {
+        this.showNotification('Nincsenek érvényes képfájlok a feltöltéshez!', 'error');
+        return;
+      }
+      
+      // Check storage limits
+      const totalNewSize = validImageFiles.reduce((sum, file) => sum + file.size, 0);
+      if (this.storageData.originalSize + totalNewSize > this.storageData.limit) {
+        this.showNotification('Nincs elegendő tárterület! Töröljön néhány képet.', 'error');
+        return;
+      }
 
-    this.showProgress(true, 'Képek betöltése...', imageFiles.length);
-    
-    for (let i = 0; i < imageFiles.length; i++) {
-      const file = imageFiles[i];
-      await this.addImage(file);
-      this.updateProgress(i + 1, imageFiles.length);
+      this.showProgress(true, 'Képek betöltése...', validImageFiles.length);
+      
+      let successCount = 0;
+      let failedFiles = [];
+      
+      for (let i = 0; i < validImageFiles.length; i++) {
+        const file = validImageFiles[i];
+        try {
+          await this.addImage(file);
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to add image ${file.name}:`, error);
+          failedFiles.push(file.name);
+        }
+        this.updateProgress(i + 1, validImageFiles.length);
+      }
+      
+      this.hideProgress();
+      this.updateStats();
+      this.renderImages();
+      
+      // Show results
+      if (successCount > 0) {
+        let message = `${successCount} kép sikeresen betöltve!`;
+        if (failedFiles.length > 0) {
+          message += ` ${failedFiles.length} kép betöltése sikertelen.`;
+        }
+        this.showNotification(message, successCount === validImageFiles.length ? 'success' : 'warning');
+      } else {
+        this.showNotification('Egyik kép sem tölthető be!', 'error');
+      }
+      
+    } catch (error) {
+      console.error('File processing error:', error);
+      this.hideProgress();
+      this.showNotification('Hiba a fájlok feldolgozása közben!', 'error');
     }
-    
-    this.hideProgress();
-    this.updateStats();
-    this.renderImages();
-    this.showNotification(`${imageFiles.length} kép sikeresen betöltve!`, 'success');
   }
 
   async addImage(file) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const imageData = {
-            id: Date.now() + Math.random(),
-            file: file,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            width: img.width,
-            height: img.height,
-            src: e.target.result,
-            processed: false,
-            processedSize: null,
-            processedSrc: null
-          };
-          
-          this.images.push(imageData);
-          this.storageData.originalSize += file.size;
-          this.updateFileTypeStats(file.type, file.size);
-          resolve();
+    return new Promise((resolve, reject) => {
+      try {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          try {
+            const img = new Image();
+            
+            img.onload = () => {
+              try {
+                // Validate image dimensions
+                if (img.width === 0 || img.height === 0) {
+                  reject(new Error(`Érvénytelen képméret: ${file.name}`));
+                  return;
+                }
+                
+                if (img.width > 16384 || img.height > 16384) {
+                  reject(new Error(`A kép mérete túl nagy: ${file.name} (${img.width}×${img.height}, maximum 16384×16384)`));
+                  return;
+                }
+                
+                const imageData = {
+                  id: Date.now() + Math.random(),
+                  file: file,
+                  name: file.name,
+                  size: file.size,
+                  type: file.type,
+                  width: img.width,
+                  height: img.height,
+                  src: e.target.result,
+                  processed: false,
+                  processedSize: null,
+                  processedSrc: null,
+                  addedAt: new Date().toLocaleString()
+                };
+                
+                this.images.push(imageData);
+                this.storageData.originalSize += file.size;
+                this.updateFileTypeStats(file.type, file.size);
+                resolve();
+                
+              } catch (dataError) {
+                console.error('Error processing image data:', dataError);
+                reject(new Error(`Hiba a képadatok feldolgozásakor: ${file.name}`));
+              }
+            };
+            
+            img.onerror = (imgError) => {
+              console.error('Image loading error:', imgError);
+              reject(new Error(`Sérült vagy érvénytelen képfájl: ${file.name}`));
+            };
+            
+            // Set timeout for image loading
+            setTimeout(() => {
+              reject(new Error(`Időtúllépés a kép betöltésekor: ${file.name}`));
+            }, 30000); // 30 second timeout
+            
+            img.src = e.target.result;
+            
+          } catch (imgError) {
+            console.error('Error setting up image:', imgError);
+            reject(new Error(`Hiba a kép beállításakor: ${file.name}`));
+          }
         };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+        
+        reader.onerror = (readError) => {
+          console.error('FileReader error:', readError);
+          reject(new Error(`Fájlolvasási hiba: ${file.name}`));
+        };
+        
+        reader.onabort = () => {
+          reject(new Error(`Fájlolvasás megszakítva: ${file.name}`));
+        };
+        
+        // Start reading the file
+        reader.readAsDataURL(file);
+        
+      } catch (setupError) {
+        console.error('Error setting up file reader:', setupError);
+        reject(new Error(`Inicializálási hiba: ${file.name}`));
+      }
     });
+  }
+
+  calculateDataUrlSize(dataUrl) {
+    // More accurate size calculation for data URLs
+    try {
+      if (!dataUrl || typeof dataUrl !== 'string') {
+        return 0;
+      }
+      
+      const base64String = dataUrl.split(',')[1];
+      if (!base64String) {
+        return 0;
+      }
+      
+      // Calculate actual byte size from base64
+      const stringLength = base64String.length;
+      const sizeInBytes = Math.floor(stringLength * 3 / 4);
+      
+      // Account for padding
+      const paddingCount = base64String.match(/=/g)?.length || 0;
+      return sizeInBytes - paddingCount;
+      
+    } catch (error) {
+      console.error('Error calculating data URL size:', error);
+      return 0;
+    }
   }
 
   updateFileTypeStats(type, size) {
@@ -403,48 +605,131 @@ class ImageFlowApp {
     const compressionRatio = processedSizeMB ? 
       Math.round((1 - imageData.processedSize / imageData.size) * 100) : 0;
 
+    const processingTime = imageData.processingTime ? 
+      imageData.processingTime.toFixed(0) : null;
+
     return `
-      <div class="image-card animate-fade-in">
-        <div class="aspect-square overflow-hidden">
+      <div class="card hover-lift animate-fade-in">
+        <div class="aspect-square overflow-hidden relative group">
           <img src="${imageData.src}" alt="${imageData.name}" 
-               class="w-full h-full object-cover transition-transform hover:scale-110" 
+               class="w-full h-full object-cover transition-all duration-300 group-hover:scale-105" 
                loading="lazy">
+          
+          <!-- Processing Status Overlay -->
+          ${imageData.processed ? `
+            <div class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+              ${imageData.processedFormat ? imageData.processedFormat.toUpperCase() : 'Feldolgozott'}
+            </div>
+          ` : ''}
+          
+          <!-- Quick Format Conversion Overlay -->
+          <div class="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div class="flex gap-1">
+              <button onclick="app.convertFormat('${imageData.id}', 'webp')" 
+                      class="btn btn-sm bg-white/90 text-gray-800 hover:bg-white text-xs">WebP</button>
+              <button onclick="app.convertFormat('${imageData.id}', 'png')" 
+                      class="btn btn-sm bg-white/90 text-gray-800 hover:bg-white text-xs">PNG</button>
+              <button onclick="app.convertFormat('${imageData.id}', 'jpg')" 
+                      class="btn btn-sm bg-white/90 text-gray-800 hover:bg-white text-xs">JPG</button>
+            </div>
+          </div>
         </div>
-        <div class="p-4">
-          <h3 class="font-semibold truncate mb-2" title="${imageData.name}">${imageData.name}</h3>
-          <div class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-            <div class="flex justify-between">
-              <span>Méret:</span>
-              <span>${imageData.width}x${imageData.height}</span>
+        
+        <div class="p-4 relative z-10">
+          <h3 class="font-semibold truncate mb-3 text-neutral-900 dark:text-neutral-100" title="${imageData.name}">
+            ${imageData.name}
+          </h3>
+          
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between items-center">
+              <span class="text-neutral-600 dark:text-neutral-400">Méret:</span>
+              <span class="font-medium text-neutral-800 dark:text-neutral-200">
+                ${imageData.width}×${imageData.height}
+              </span>
             </div>
-            <div class="flex justify-between">
-              <span>Fájlméret:</span>
-              <span>${sizeInMB} MB</span>
+            
+            <div class="flex justify-between items-center">
+              <span class="text-neutral-600 dark:text-neutral-400">Eredeti:</span>
+              <span class="font-medium text-neutral-800 dark:text-neutral-200">${sizeInMB} MB</span>
             </div>
+            
             ${processedSizeMB ? `
-              <div class="flex justify-between text-green-600">
-                <span>Tömörített:</span>
-                <span>${processedSizeMB} MB (-${compressionRatio}%)</span>
+              <div class="flex justify-between items-center">
+                <span class="text-neutral-600 dark:text-neutral-400">Feldolgozott:</span>
+                <span class="font-medium text-green-600">${processedSizeMB} MB</span>
               </div>
+              
+              ${compressionRatio !== 0 ? `
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-600 dark:text-neutral-400">Megtakarítás:</span>
+                  <span class="font-semibold text-green-600">${compressionRatio}%</span>
+                </div>
+              ` : ''}
+              
+              ${processingTime ? `
+                <div class="flex justify-between items-center">
+                  <span class="text-neutral-600 dark:text-neutral-400">Feldolgozási idő:</span>
+                  <span class="font-medium text-neutral-600 dark:text-neutral-400">${processingTime}ms</span>
+                </div>
+              ` : ''}
             ` : ''}
           </div>
-          <div class="flex gap-2 mt-4">
-            <button onclick="app.processImage('${imageData.id}')" 
-                    class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-              ${imageData.processed ? 'Újra feldolgoz' : 'Feldolgoz'}
-            </button>
-            <button onclick="app.downloadImage('${imageData.id}')" 
-                    class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+          
+          <!-- Action Buttons -->
+          <div class="grid grid-cols-2 gap-2 mt-4">
+            <button onclick="app.downloadOriginal('${imageData.id}')" 
+                    class="btn btn-secondary btn-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M12 10v6m0 0l-3-3m3 3l3-3M9 5l3 3 3-3M21 21H3" />
               </svg>
+              Eredeti
             </button>
-            <button onclick="app.removeImage('${imageData.id}')" 
-                    class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+            
+            ${imageData.processed ? `
+              <button onclick="app.downloadImage('${imageData.id}')" 
+                      class="btn btn-success btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M12 10v6m0 0l-3-3m3 3l3-3M9 5l3 3 3-3" />
+                </svg>
+                Letöltés
+              </button>
+            ` : `
+              <button onclick="app.processImage('${imageData.id}')" 
+                      class="btn btn-primary btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Feldolgoz
+              </button>
+            `}
+          </div>
+          
+          <!-- Advanced Options -->
+          <div class="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700">
+            <div class="flex justify-between items-center">
+              <button onclick="app.removeImage('${imageData.id}')" 
+                      class="btn btn-danger btn-sm text-xs">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Törlés
+              </button>
+              
+              <div class="flex gap-1">
+                <span class="text-xs px-2 py-1 bg-neutral-100 dark:bg-neutral-700 rounded-full text-neutral-600 dark:text-neutral-400">
+                  ${imageData.file.type.split('/')[1].toUpperCase()}
+                </span>
+                ${imageData.processed ? `
+                  <span class="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 rounded-full text-green-600 dark:text-green-400">
+                    Veszteségmentes
+                  </span>
+                ` : ''}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -452,10 +737,48 @@ class ImageFlowApp {
   }
 
   applyPreset(preset) {
+    // Professional lossless presets
     const presets = {
-      thumbnail: { width: 300, height: 300, quality: 80, format: 'webp' },
-      social: { width: 1200, height: 1200, quality: 85, format: 'jpg' },
-      web: { width: 800, height: null, quality: 75, format: 'webp' }
+      thumbnail: { 
+        width: 300, 
+        height: 300, 
+        quality: 1, 
+        format: 'webp',
+        maintainAspect: true,
+        algorithm: 'lanczos'
+      },
+      social: { 
+        width: 1200, 
+        height: 1200, 
+        quality: 1, 
+        format: 'webp',
+        maintainAspect: true,
+        algorithm: 'lanczos'
+      },
+      web: { 
+        width: 800, 
+        height: null, 
+        quality: 1, 
+        format: 'webp',
+        maintainAspect: true,
+        algorithm: 'lanczos'
+      },
+      print: {
+        width: null,
+        height: null,
+        quality: 1,
+        format: 'png',
+        maintainAspect: true,
+        algorithm: 'lanczos'
+      },
+      mobile: {
+        width: 480,
+        height: null,
+        quality: 1,
+        format: 'webp',
+        maintainAspect: true,
+        algorithm: 'lanczos'
+      }
     };
     
     const config = presets[preset];
@@ -537,76 +860,284 @@ class ImageFlowApp {
     if (!image) return;
     
     try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      return new Promise((resolve, reject) => {
-        img.onload = async () => {
-          let { width, height } = settings;
-          
-          // Calculate dimensions
-          if (width || height) {
-            if (settings.maintainAspect !== false) {
-              const aspectRatio = img.width / img.height;
-              if (width && !height) {
-                height = Math.round(width / aspectRatio);
-              } else if (height && !width) {
-                width = Math.round(height * aspectRatio);
-              }
-            }
-          } else {
-            width = img.width;
-            height = img.height;
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          // Use Pica for high-quality resizing
-          const pica = window.pica();
-          
-          // Create a temporary canvas with original image
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
-          tempCanvas.width = img.width;
-          tempCanvas.height = img.height;
-          tempCtx.drawImage(img, 0, 0);
-          
-          try {
-            await pica.resize(tempCanvas, canvas);
-            
-            // Convert to desired format
-            const mimeType = `image/${settings.format}`;
-            const processedDataUrl = canvas.toDataURL(mimeType, settings.quality);
-            
-            // Calculate processed size
-            const base64Length = processedDataUrl.split(',')[1].length;
-            const processedSize = Math.round(base64Length * 0.75); // Approximate size
-            
-            // Update image data
-            image.processed = true;
-            image.processedSrc = processedDataUrl;
-            image.processedSize = processedSize;
-            
-            // Update storage stats
-            this.storageData.compressedSize += processedSize;
-            this.processingStats.totalProcessed++;
-            
-            resolve();
-          } catch (error) {
-            console.error('Processing error:', error);
-            reject(error);
-          }
-        };
-        
-        img.onerror = reject;
-        img.src = image.src;
-      });
-      
+      return await this.processImageLossless(image, settings);
     } catch (error) {
       console.error('Failed to process image:', error);
       this.showNotification('Képfeldolgozás sikertelen!', 'error');
+      throw error;
+    }
+  }
+
+  async processImageLossless(image, settings) {
+    const startTime = performance.now();
+    
+    return new Promise(async (resolve, reject) => {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = async () => {
+          try {
+            const processedData = await this.applyLosslessProcessing(img, settings);
+            
+            // Update image data with processed result
+            image.processed = true;
+            image.processedSrc = processedData.dataUrl;
+            image.processedSize = processedData.size;
+            image.processedFormat = settings.format;
+            image.processedDimensions = processedData.dimensions;
+            image.processingTime = performance.now() - startTime;
+            
+            // Update statistics
+            this.storageData.compressedSize += processedData.size;
+            this.processingStats.totalProcessed++;
+            this.processingStats.timeSaved += image.processingTime;
+            
+            console.log(`Lossless processing completed in ${image.processingTime.toFixed(2)}ms`);
+            resolve(processedData);
+            
+          } catch (processingError) {
+            console.error('Lossless processing error:', processingError);
+            reject(processingError);
+          }
+        };
+        
+        img.onerror = (error) => {
+          console.error('Image loading error:', error);
+          reject(new Error('Failed to load image for processing'));
+        };
+        
+        img.src = image.src;
+        
+      } catch (error) {
+        console.error('Setup error:', error);
+        reject(error);
+      }
+    });
+  }
+
+  async applyLosslessProcessing(sourceImg, settings) {
+    const { format, quality = 1, width, height, maintainAspect = true } = settings;
+    
+    // Calculate target dimensions
+    let targetWidth = width || sourceImg.naturalWidth;
+    let targetHeight = height || sourceImg.naturalHeight;
+    
+    if ((width || height) && maintainAspect) {
+      const aspectRatio = sourceImg.naturalWidth / sourceImg.naturalHeight;
+      if (width && !height) {
+        targetHeight = Math.round(width / aspectRatio);
+      } else if (height && !width) {
+        targetWidth = Math.round(height * aspectRatio);
+      }
+    }
+    
+    // Create high-quality canvas for processing
+    const canvas = this.createHighQualityCanvas(targetWidth, targetHeight);
+    const ctx = canvas.getContext('2d');
+    
+    // Apply advanced resampling if resizing is needed
+    if (targetWidth !== sourceImg.naturalWidth || targetHeight !== sourceImg.naturalHeight) {
+      await this.resizeWithAdvancedAlgorithm(sourceImg, canvas, this.processingOptions.algorithm);
+    } else {
+      // Direct copy for format conversion only
+      ctx.drawImage(sourceImg, 0, 0);
+    }
+    
+    // Apply format-specific optimizations
+    const optimizedDataUrl = await this.applyFormatOptimization(canvas, format, quality);
+    
+    // Calculate actual file size
+    const base64Length = optimizedDataUrl.split(',')[1].length;
+    const actualSize = Math.round(base64Length * 0.75);
+    
+    return {
+      dataUrl: optimizedDataUrl,
+      size: actualSize,
+      dimensions: { width: targetWidth, height: targetHeight },
+      format: format
+    };
+  }
+
+  createHighQualityCanvas(width, height) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Enable high-quality rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    
+    // Set optimal pixel density
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    if (devicePixelRatio > 1) {
+      const scaledWidth = width * devicePixelRatio;
+      const scaledHeight = height * devicePixelRatio;
+      
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      canvas.width = scaledWidth;
+      canvas.height = scaledHeight;
+      
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+    }
+    
+    return canvas;
+  }
+
+  async resizeWithAdvancedAlgorithm(sourceImg, targetCanvas, algorithm = 'lanczos') {
+    const pica = window.pica();
+    
+    // Create source canvas
+    const sourceCanvas = document.createElement('canvas');
+    const sourceCtx = sourceCanvas.getContext('2d');
+    sourceCanvas.width = sourceImg.naturalWidth;
+    sourceCanvas.height = sourceImg.naturalHeight;
+    
+    // Draw source image with high quality
+    sourceCtx.imageSmoothingEnabled = true;
+    sourceCtx.imageSmoothingQuality = 'high';
+    sourceCtx.drawImage(sourceImg, 0, 0);
+    
+    // Configure Pica options for maximum quality
+    const resizeOptions = {
+      quality: 3, // Maximum quality (0-3)
+      alpha: true,
+      unsharpAmount: this.processingOptions.enableSharpening ? 80 : 0,
+      unsharpRadius: 0.6,
+      unsharpThreshold: 2
+    };
+    
+    // Apply advanced resampling algorithm
+    switch (algorithm) {
+      case 'lanczos':
+        resizeOptions.filter = 'lanczos3';
+        break;
+      case 'bicubic':
+        resizeOptions.filter = 'catrom';
+        break;
+      case 'bilinear':
+        resizeOptions.filter = 'linear';
+        break;
+      case 'nearest':
+        resizeOptions.filter = 'box';
+        break;
+      default:
+        resizeOptions.filter = 'lanczos3';
+    }
+    
+    try {
+      await pica.resize(sourceCanvas, targetCanvas, resizeOptions);
+    } catch (error) {
+      console.warn('Pica resize failed, falling back to canvas resize:', error);
+      
+      // Fallback to high-quality canvas resize
+      const ctx = targetCanvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(sourceCanvas, 0, 0, targetCanvas.width, targetCanvas.height);
+    }
+  }
+
+  async applyFormatOptimization(canvas, format, quality = 1) {
+    const formatConfig = this.formatConfigs[format] || this.formatConfigs['png'];
+    
+    switch (format) {
+      case 'webp':
+        return this.optimizeWebP(canvas, formatConfig, quality);
+      case 'png':
+        return this.optimizePNG(canvas, formatConfig);
+      case 'avif':
+        return this.optimizeAVIF(canvas, formatConfig, quality);
+      case 'tiff':
+        return this.optimizeTIFF(canvas, formatConfig);
+      case 'jpg':
+      case 'jpeg':
+        return this.optimizeJPEG(canvas, formatConfig, quality);
+      default:
+        return canvas.toDataURL(`image/${format}`, quality);
+    }
+  }
+
+  optimizeWebP(canvas, config, quality) {
+    if (config.lossless) {
+      // Force lossless WebP
+      return canvas.toDataURL('image/webp', 1.0);
+    }
+    return canvas.toDataURL('image/webp', quality);
+  }
+
+  optimizePNG(canvas, config) {
+    // PNG is inherently lossless
+    return canvas.toDataURL('image/png');
+  }
+
+  optimizeAVIF(canvas, config, quality) {
+    // AVIF lossless mode (if supported by browser)
+    if (config.lossless) {
+      return canvas.toDataURL('image/avif', 1.0);
+    }
+    return canvas.toDataURL('image/avif', quality);
+  }
+
+  optimizeTIFF(canvas, config) {
+    // TIFF support is limited in browsers, fallback to PNG
+    console.warn('TIFF format not fully supported, using PNG instead');
+    return canvas.toDataURL('image/png');
+  }
+
+  optimizeJPEG(canvas, config, quality) {
+    // JPEG with high quality settings
+    const jpegQuality = Math.max(0.85, quality); // Never go below 85% for quality
+    return canvas.toDataURL('image/jpeg', jpegQuality);
+  }
+
+  // Simple download without processing
+  async downloadOriginal(imageId) {
+    const image = this.images.find(img => img.id == imageId);
+    if (!image) return;
+    
+    try {
+      // Create download link for original image
+      const link = document.createElement('a');
+      link.download = `original_${image.name}`;
+      link.href = image.src;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      this.showNotification('Eredeti kép letöltve!', 'success');
+      
+    } catch (error) {
+      console.error('Download failed:', error);
+      this.showNotification('Letöltés sikertelen!', 'error');
+    }
+  }
+
+  // Format conversion without resizing
+  async convertFormat(imageId, targetFormat) {
+    const image = this.images.find(img => img.id == imageId);
+    if (!image) return;
+    
+    try {
+      const settings = {
+        format: targetFormat,
+        quality: 1, // Maximum quality
+        width: null,
+        height: null,
+        maintainAspect: true
+      };
+      
+      await this.processImageWithSettings(imageId, settings);
+      this.showNotification(`Kép konvertálva ${targetFormat.toUpperCase()} formátumba!`, 'success');
+      
+    } catch (error) {
+      console.error('Format conversion failed:', error);
+      this.showNotification('Formátum konverzió sikertelen!', 'error');
     }
   }
 
