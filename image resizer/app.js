@@ -29,6 +29,7 @@ class ImageFlowApp {
     this.generateQRCode();
     this.updateStats();
     this.registerServiceWorker();
+    this.handleURLParameters();
   }
 
   setupEventListeners() {
@@ -36,18 +37,25 @@ class ImageFlowApp {
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
-    dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
-    dropZone.addEventListener('drop', this.handleDrop.bind(this));
-    fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+    if (dropZone && fileInput) {
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+      dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+      dropZone.addEventListener('drop', this.handleDrop.bind(this));
+      fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+    }
 
     // Quick upload button
-    document.getElementById('quickUpload').addEventListener('click', () => fileInput.click());
+    const quickUpload = document.getElementById('quickUpload');
+    if (quickUpload && fileInput) {
+      quickUpload.addEventListener('click', () => fileInput.click());
+    }
 
     // Processing controls
-    document.getElementById('quickProcess').addEventListener('click', this.quickProcess.bind(this));
-    document.getElementById('batchProcess').addEventListener('click', this.batchProcess.bind(this));
+    const quickProcess = document.getElementById('quickProcess');
+    const batchProcess = document.getElementById('batchProcess');
+    if (quickProcess) quickProcess.addEventListener('click', this.quickProcess.bind(this));
+    if (batchProcess) batchProcess.addEventListener('click', this.batchProcess.bind(this));
 
     // Quick presets
     document.querySelectorAll('.quick-preset').forEach(btn => {
@@ -789,6 +797,29 @@ class ImageFlowApp {
     }
   }
 
+  handleURLParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Handle action parameter from PWA shortcuts
+    const action = urlParams.get('action');
+    if (action === 'upload') {
+      document.getElementById('fileInput').click();
+    } else if (action === 'connect') {
+      this.showDevicesTab();
+    }
+    
+    // Handle connection parameter
+    const connectId = urlParams.get('connect');
+    if (connectId) {
+      setTimeout(() => {
+        if (this.peer && this.peer.id) {
+          document.getElementById('deviceId').value = connectId;
+          this.connectManual();
+        }
+      }, 2000); // Wait for peer connection to establish
+    }
+  }
+
   // File sharing methods
   sendFile(imageId, connectionId) {
     const image = this.images.find(img => img.id == imageId);
@@ -875,15 +906,8 @@ document.head.appendChild(style);
 // Initialize the application
 const app = new ImageFlowApp();
 
-// Check for connection parameter in URL
-const urlParams = new URLSearchParams(window.location.search);
-const connectId = urlParams.get('connect');
-if (connectId && app.peer) {
-  app.peer.on('open', () => {
-    document.getElementById('deviceId').value = connectId;
-    app.connectManual();
-  });
-}
+// URL parameters are now handled in the app.handleURLParameters() method
 
-// Add global download all function
+// Add global functions for HTML onclick handlers
 window.downloadAll = () => app.downloadAll();
+window.app = app; // Make app instance globally available

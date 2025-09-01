@@ -4,8 +4,10 @@ const STATIC_CACHE_NAME = 'imageflow-static-v1.0.0';
 const DYNAMIC_CACHE_NAME = 'imageflow-dynamic-v1.0.0';
 
 const STATIC_FILES = [
-  '/imageflow_pro_saas.html',
+  '/',
+  '/index.html',
   '/manifest.json',
+  '/app.js',
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
   'https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js',

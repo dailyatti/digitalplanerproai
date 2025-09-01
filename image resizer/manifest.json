@@ -4,7 +4,7 @@
   "description": "Advanced image processing with wireless file sharing, QR code pairing, and lossless quality conversion",
   "version": "1.0.0",
   "manifest_version": 3,
-  "start_url": "/imageflow_pro_saas.html",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#667eea",
@@ -32,7 +32,7 @@
       "name": "Upload Images",
       "short_name": "Upload",
       "description": "Quickly upload and process images",
-      "url": "/imageflow_pro_saas.html?action=upload",
+      "url": "/?action=upload",
       "icons": [
         {
           "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTcgMTZhNCA0IDAgMDEtLjg4LTcuOTAzQTUgNSAwIDExMTUuOSA2TDE2IDZhNSA1IDAgMDExIDkuOU0xNSAxM2wtMy0zbTAgMGwtMyAzbTMtM3YxMiIgc3Ryb2tlPSIjNjY3ZWVhIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K",
@@ -44,7 +44,7 @@
       "name": "Connect Device",
       "short_name": "Connect",
       "description": "Connect to another device via QR code",
-      "url": "/imageflow_pro_saas.html?action=connect",
+      "url": "/?action=connect",
       "icons": [
         {
           "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMgM2g2djZIM3ptOCAwaDZ2NmgtNnptLTggOGg2djZIM3ptMTMgMGgzdjNoLTN6bS0zLTNoM3YzaC0zeiIgZmlsbD0iIzY2N2VlYSIvPgo8L3N2Zz4K",
@@ -54,7 +54,7 @@
     }
   ],
   "share_target": {
-    "action": "/imageflow_pro_saas.html",
+    "action": "/",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
@@ -73,7 +73,7 @@
   "protocol_handlers": [
     {
       "protocol": "web+imageflow",
-      "url": "/imageflow_pro_saas.html?protocol=%s"
+      "url": "/?protocol=%s"
     }
   ]
 }
