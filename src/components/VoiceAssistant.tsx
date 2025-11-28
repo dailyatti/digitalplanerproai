@@ -191,10 +191,15 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
           FONTOS SZABÁLYOK:
           
+          0. TÜRELEM ÉS HALLGATÁS (Kritikus):
+             - VÁRD MEG, amíg a felhasználó befejezi a mondatot. Ne vágj közbe!
+             - Csak akkor válaszolj, ha egyértelmű utasítást kaptál.
+          
           1. KONTEXTUS ÉRZÉKELÉS (Kritikus):
-             - Ha a 'COMPOSITE_GENERATOR' aktív, minden "állítás" (pl. "legyen rácsos") a 'set_composite_config' eszközre vonatkozik.
+             - Ha a 'COMPOSITE_GENERATOR' aktív (Active Modal: COMPOSITE_GENERATOR), akkor MINDEN "állítás" (pl. "legyen rácsos", "legyen 16:9", "írd be a promptot") a 'set_composite_config' eszközre vonatkozik.
+             - Ha a felhasználó azt mondja "Zárd be", használd a 'manage_ui_state' -> 'CLOSE_COMPOSITE' parancsot.
              - Ha a 'MAIN_DASHBOARD' aktív, a 'update_dashboard' eszközt használd.
-             - Ha a felhasználó azt kéri "Olvasd fel a dokumentációt", hívd meg a 'read_docs_content' eszközt, majd olvasd fel a kapott szöveget.
+             - Ha a felhasználó azt kéri "Olvasd fel a dokumentációt", hívd meg a 'read_docs_content' eszközt.
 
           2. NYELVVÁLTÁS (Szigorú Kódolás):
              - "Válts magyarra" -> 'manage_ui_state' -> 'CHANGE_LANG' -> 'hu'.
@@ -216,10 +221,15 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           
           CRITICAL PROTOCOLS:
           
+          0. PATIENCE & LISTENING:
+             - WAIT for the user to finish speaking completely. DO NOT INTERRUPT.
+             - Only respond when a clear command is given.
+
           1. CONTEXT AWARENESS:
-             - If 'COMPOSITE_GENERATOR' is active, use 'set_composite_config' for layout/prompt changes.
+             - If 'COMPOSITE_GENERATOR' is active, ALL config changes (aspect ratio, prompt, resolution) MUST use 'set_composite_config'.
+             - If user says "Close it", use 'manage_ui_state' -> 'CLOSE_COMPOSITE'.
              - If 'MAIN_DASHBOARD' is active, use 'update_dashboard'.
-             - If user asks to "Read the docs", call 'read_docs_content' and read the text aloud.
+             - If user asks to "Read the docs", call 'read_docs_content'.
 
           2. LANGUAGE SWITCHING:
              - "Hungarian" -> 'hu'
@@ -403,7 +413,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                         parameters: {
                             type: Type.OBJECT,
                             properties: {
-                                action: { type: Type.STRING, enum: ['OPEN_COMPOSITE', 'OPEN_OCR', 'OPEN_DOCS', 'CHANGE_LANG', 'OPEN_LANG_MENU'] },
+                                action: { type: Type.STRING, enum: ['OPEN_COMPOSITE', 'CLOSE_COMPOSITE', 'OPEN_OCR', 'OPEN_DOCS', 'CHANGE_LANG', 'OPEN_LANG_MENU'] },
                                 value: { type: Type.STRING, description: "For CHANGE_LANG, pass the ISO code (e.g. 'hu', 'en')." }
                             }
                         }
@@ -430,7 +440,9 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                             type: Type.OBJECT,
                             properties: {
                                 prompt: { type: Type.STRING },
-                                layout: { type: Type.STRING, enum: ['GRID', 'VERTICAL', 'HORIZONTAL'] }
+                                layout: { type: Type.STRING, enum: ['GRID', 'VERTICAL', 'HORIZONTAL'] },
+                                aspectRatio: { type: Type.STRING, enum: ['1:1', '16:9', '9:16', '4:3'] },
+                                resolution: { type: Type.STRING, enum: ['1K', '2K', '4K'] }
                             }
                         }
                     }
@@ -622,7 +634,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             <motion.div
                 drag
                 dragMomentum={false}
-                className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2"
+                className="fixed bottom-6 right-6 z-[70] flex flex-col items-end gap-2"
             >
                 {isActive && (
                     <div className="flex flex-col gap-2 items-end">
