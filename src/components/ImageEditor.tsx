@@ -1,7 +1,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Cropper from 'react-cropper';
-import { X, Check, RotateCw, ZoomIn, ZoomOut, Sparkles, Maximize, Download, Brush } from 'lucide-react';
+import { X, Check, RotateCw, ZoomIn, ZoomOut, Sparkles, Maximize, Download, Brush, Eraser } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { LoadingOverlay } from './LoadingOverlay';
@@ -24,6 +24,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onSave, onCl
 
     // Masking State
     const [isMaskingMode, setIsMaskingMode] = useState(false);
+    const [isEraserMode, setIsEraserMode] = useState(false);
     const [brushSize, setBrushSize] = useState(20);
     const maskCanvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
@@ -68,7 +69,15 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onSave, onCl
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        ctx.globalCompositeOperation = 'destination-out'; // "Erase" the dark overlay to reveal image (create mask)
+        if (isEraserMode) {
+            // Eraser mode: restore the dark overlay
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        } else {
+            // Brush mode: "Erase" the dark overlay to reveal image (create mask)
+            ctx.globalCompositeOperation = 'destination-out';
+        }
+
         ctx.lineWidth = brushSize;
         ctx.lineCap = 'round';
         ctx.lineTo(x, y);
@@ -265,17 +274,52 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onSave, onCl
                 <div className="p-6 flex flex-col gap-4">
                     {/* Masking Controls */}
                     {isMaskingMode && (
-                        <div className="flex items-center justify-center gap-4 pb-4 border-b border-slate-800">
-                            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Brush Size</span>
-                            <input
-                                type="range"
-                                min="5"
-                                max="100"
-                                value={brushSize}
-                                onChange={(e) => setBrushSize(Number(e.target.value))}
-                                className="w-48 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                            />
-                            <div className="w-8 h-8 rounded-full bg-red-500/50 border border-red-500" style={{ width: brushSize / 2, height: brushSize / 2 }} />
+                        <div className="flex flex-col gap-3 pb-4 border-b border-slate-800">
+                            <div className="flex items-center justify-center gap-3">
+                                <button
+                                    onClick={() => setIsEraserMode(false)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${!isEraserMode ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                                >
+                                    <Brush className="w-4 h-4" /> Brush
+                                </button>
+                                <button
+                                    onClick={() => setIsEraserMode(true)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-all ${isEraserMode ? 'bg-red-600 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                                >
+                                    <Eraser className="w-4 h-4" /> Eraser
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (maskCanvasRef.current) {
+                                            const ctx = maskCanvasRef.current.getContext('2d');
+                                            if (ctx) {
+                                                ctx.clearRect(0, 0, maskCanvasRef.current.width, maskCanvasRef.current.height);
+                                                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                                                ctx.fillRect(0, 0, maskCanvasRef.current.width, maskCanvasRef.current.height);
+                                            }
+                                        }
+                                    }}
+                                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg font-bold text-sm transition-all"
+                                >
+                                    <X className="w-4 h-4" /> Clear
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-center gap-4">
+                                <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Brush Size</span>
+                                <input
+                                    type="range"
+                                    min="5"
+                                    max="100"
+                                    value={brushSize}
+                                    onChange={(e) => setBrushSize(Number(e.target.value))}
+                                    className="w-48 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                />
+                                <div
+                                    className={`rounded-full border-2 ${isEraserMode ? 'bg-slate-700/50 border-red-500' : 'bg-red-500/50 border-red-500'}`}
+                                    style={{ width: Math.max(brushSize / 2, 12), height: Math.max(brushSize / 2, 12) }}
+                                />
+                                <span className="text-xs text-slate-300 font-mono">{brushSize}px</span>
+                            </div>
                         </div>
                     )}
 
