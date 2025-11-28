@@ -367,8 +367,8 @@ const App: React.FC = () => {
     };
 
     const handleNativeGen = async (overridePrompt?: string, overrideConfig?: any) => {
-        // ATOMIC EXECUTION: Prioritize override values (from voice)
-        const finalPrompt = overridePrompt || nativePrompt;
+        // ATOMIC EXECUTION: Prioritize override values (from voice) ONLY if they are not empty
+        const finalPrompt = (overridePrompt && overridePrompt.trim()) ? overridePrompt : nativePrompt;
         const finalConfig = overrideConfig || nativeConfig;
 
         if (!finalPrompt || !finalPrompt.trim()) {
@@ -674,6 +674,10 @@ const App: React.FC = () => {
                 case 'OPEN_OCR': openOCRModal(); break;
                 case 'OPEN_DOCS': setIsGuideOpen(true); break;
                 case 'CLOSE_MODAL':
+                case 'CLOSE_COMPOSITE': setIsCompositeModalOpen(false); break;
+                case 'CLOSE_OCR': setIsOCRModalOpen(false); break;
+                case 'CLOSE_DOCS': setIsGuideOpen(false); break;
+                case 'CLOSE_ALL':
                     setIsCompositeModalOpen(false);
                     setIsOCRModalOpen(false);
                     setIsGuideOpen(false);
@@ -778,21 +782,21 @@ const App: React.FC = () => {
         toast.success('Edited version saved as variant');
     };
 
-    const handleGenerativeFill = async (blob: Blob): Promise<string> => {
-        const toastId = toast.loading('Expanding Canvas...');
+    const handleGenerativeFill = async (blob: Blob, customPrompt?: string): Promise<string> => {
+        const toastId = toast.loading(customPrompt ? 'Magic Editing...' : 'Expanding Canvas...');
         try {
             if (!apiKey) {
-                toast.error("API Key required for Generative Fill.");
+                toast.error("API Key required.");
                 toast.dismiss(toastId);
                 throw new Error("API Key missing");
             }
-            const result = await processGenerativeFill(apiKey, blob);
+            const result = await processGenerativeFill(apiKey, blob, OutputFormat.PNG, customPrompt);
             toast.dismiss(toastId);
-            toast.success('Outpainting Complete!');
+            toast.success(customPrompt ? 'Edit Complete!' : 'Outpainting Complete!');
             return result.processedUrl;
         } catch (e: any) {
             toast.dismiss(toastId);
-            toast.error('Outpainting Failed');
+            toast.error('Operation Failed');
             throw e;
         }
     };

@@ -195,22 +195,22 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
              - VÁRD MEG, amíg a felhasználó befejezi a mondatot. Ne vágj közbe!
              - Csak akkor válaszolj, ha egyértelmű utasítást kaptál.
           
-          1. KONTEXTUS ÉRZÉKELÉS (Kritikus):
-             - Ha a 'COMPOSITE_GENERATOR' aktív (Active Modal: COMPOSITE_GENERATOR), akkor MINDEN "állítás" (pl. "legyen rácsos", "legyen 16:9", "írd be a promptot") a 'set_composite_config' eszközre vonatkozik.
-             - Ha a felhasználó azt mondja "Zárd be", használd a 'manage_ui_state' -> 'CLOSE_COMPOSITE' parancsot.
+          1. ABLAKOK KEZELÉSE (Zárás/Nyitás):
+             - "Zárd be a dokumentációt" -> 'manage_ui_state' -> 'CLOSE_DOCS'.
+             - "Zárd be az OCR-t" -> 'manage_ui_state' -> 'CLOSE_OCR'.
+             - "Zárd be a kompozitot" -> 'manage_ui_state' -> 'CLOSE_COMPOSITE'.
+             - "Zárj be mindent" -> 'manage_ui_state' -> 'CLOSE_ALL'.
+
+          2. KONTEXTUS ÉRZÉKELÉS:
+             - Ha a 'COMPOSITE_GENERATOR' aktív, a beállítások (arány, prompt) a 'set_composite_config'-ra vonatkoznak.
              - Ha a 'MAIN_DASHBOARD' aktív, a 'update_dashboard' eszközt használd.
-             - Ha a felhasználó azt kéri "Olvasd fel a dokumentációt", hívd meg a 'read_docs_content' eszközt.
 
-          2. NYELVVÁLTÁS (Szigorú Kódolás):
-             - "Válts magyarra" -> 'manage_ui_state' -> 'CHANGE_LANG' -> 'hu'.
-             - "Switch to English" -> 'manage_ui_state' -> 'CHANGE_LANG' -> 'en'.
+          3. DOKUMENTÁCIÓ FELOLVASÁSA:
+             - Ha a felhasználó kéri ("Olvasd fel a súgót"), hívd meg a 'read_docs_content' eszközt.
+             - FONTOS: A visszakapott szöveget OLVASD FEL a felhasználónak (hangosan)! Ne csak összegezd.
 
-          3. KÉPGENERÁLÁS (Extrém Engedelmesség):
-             - "Generáld le", "Mehet", "Start" -> 'trigger_native_generation'.
-             - Ha a prompt rövid ("egy kutya"), BŐVÍTSD KI profi angol leírássá.
-
-          4. DOKUMENTÁCIÓ:
-             - Ha a felhasználó kérdez a rendszerről, hívd meg a 'read_docs_content'-et, hogy pontos választ adhass.
+          4. KÉPGENERÁLÁS:
+             - "Generáld le", "Mehet" -> 'trigger_native_generation'.
           `;
         } else {
             return `
@@ -222,25 +222,23 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           CRITICAL PROTOCOLS:
           
           0. PATIENCE & LISTENING:
-             - WAIT for the user to finish speaking completely. DO NOT INTERRUPT.
-             - Only respond when a clear command is given.
+             - WAIT for the user to finish speaking. DO NOT INTERRUPT.
 
-          1. CONTEXT AWARENESS:
-             - If 'COMPOSITE_GENERATOR' is active, ALL config changes (aspect ratio, prompt, resolution) MUST use 'set_composite_config'.
-             - If user says "Close it", use 'manage_ui_state' -> 'CLOSE_COMPOSITE'.
-             - If 'MAIN_DASHBOARD' is active, use 'update_dashboard'.
-             - If user asks to "Read the docs", call 'read_docs_content'.
+          1. WINDOW MANAGEMENT:
+             - "Close docs" -> 'manage_ui_state' -> 'CLOSE_DOCS'.
+             - "Close OCR" -> 'manage_ui_state' -> 'CLOSE_OCR'.
+             - "Close Composite" -> 'manage_ui_state' -> 'CLOSE_COMPOSITE'.
+             - "Close everything" -> 'manage_ui_state' -> 'CLOSE_ALL'.
 
-          2. LANGUAGE SWITCHING:
-             - "Hungarian" -> 'hu'
-             - "English" -> 'en'
+          2. CONTEXT AWARENESS:
+             - If 'COMPOSITE_GENERATOR' is active, use 'set_composite_config'.
 
-          3. IMAGE GENERATION:
+          3. READING DOCS:
+             - If user asks to read docs, call 'read_docs_content'.
+             - IMPORTANT: READ the returned text ALOUD to the user.
+
+          4. IMAGE GENERATION:
              - "Start", "Generate" -> 'trigger_native_generation'.
-             - EXPAND prompts to cinematic quality.
-
-          4. DOCUMENTATION:
-             - Use 'read_docs_content' to answer system questions accurately.
           `;
         }
     };
@@ -413,7 +411,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                         parameters: {
                             type: Type.OBJECT,
                             properties: {
-                                action: { type: Type.STRING, enum: ['OPEN_COMPOSITE', 'CLOSE_COMPOSITE', 'OPEN_OCR', 'OPEN_DOCS', 'CHANGE_LANG', 'OPEN_LANG_MENU'] },
+                                action: { type: Type.STRING, enum: ['OPEN_COMPOSITE', 'CLOSE_COMPOSITE', 'OPEN_OCR', 'CLOSE_OCR', 'OPEN_DOCS', 'CLOSE_DOCS', 'CHANGE_LANG', 'OPEN_LANG_MENU', 'CLOSE_ALL'] },
                                 value: { type: Type.STRING, description: "For CHANGE_LANG, pass the ISO code (e.g. 'hu', 'en')." }
                             }
                         }

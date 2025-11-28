@@ -11,7 +11,7 @@ interface ImageEditorProps {
     imageUrl: string;
     onSave: (newUrl: string, newBlob: Blob) => void;
     onClose: () => void;
-    onGenerativeFill?: (imageBlob: Blob) => Promise<string>; // Returns new image URL
+    onGenerativeFill?: (imageBlob: Blob, customPrompt?: string) => Promise<string>; // Returns new image URL
 }
 
 export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onSave, onClose, onGenerativeFill }) => {
@@ -39,7 +39,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onSave, onCl
         }
     };
 
-    const handleGenerativeFill = async () => {
+    const handleGenerativeFill = async (customPrompt?: string) => {
         if (!onGenerativeFill || !cropper) return;
 
         setIsGenerating(true);
@@ -52,7 +52,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onSave, onCl
             canvas.toBlob(async (blob: Blob | null) => {
                 if (blob) {
                     try {
-                        const newUrl = await onGenerativeFill(blob);
+                        const newUrl = await onGenerativeFill(blob, customPrompt);
                         setCurrentImageUrl(newUrl); // Update editor with new image
                         cropper.replace(newUrl); // Reset cropper to new image
                         setHasGenerated(true);
@@ -172,13 +172,25 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onSave, onCl
 
                     {/* Generative Fill Button */}
                     {onGenerativeFill && (
-                        <button
-                            onClick={handleGenerativeFill}
-                            disabled={isGenerating}
-                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-5 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-purple-900/20 transition-all disabled:opacity-50"
-                        >
-                            <Sparkles className="w-4 h-4" /> {t('genFill')}
-                        </button>
+                        <>
+                            <button
+                                onClick={() => handleGenerativeFill()}
+                                disabled={isGenerating}
+                                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-5 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-purple-900/20 transition-all disabled:opacity-50"
+                                title={t('genFillDesc')}
+                            >
+                                <Sparkles className="w-4 h-4" /> {t('genFill')}
+                            </button>
+
+                            <button
+                                onClick={() => handleGenerativeFill("Remove all text, captions, and watermarks from the image. Inpaint the area to match the background seamlessly.")}
+                                disabled={isGenerating}
+                                className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white px-5 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-red-900/20 transition-all disabled:opacity-50"
+                                title="Remove Text"
+                            >
+                                <X className="w-4 h-4" /> {t('removeText')}
+                            </button>
+                        </>
                     )}
 
                     <button

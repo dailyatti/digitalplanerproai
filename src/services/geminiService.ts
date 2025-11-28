@@ -177,14 +177,15 @@ export const generateImageFromText = async (
 export const processGenerativeFill = async (
   apiKey: string,
   imageBlob: Blob,
-  format: OutputFormat = OutputFormat.PNG
+  format: OutputFormat = OutputFormat.PNG,
+  customPrompt?: string
 ): Promise<{ processedUrl: string; width: number; height: number; size: number }> => {
   try {
     const ai = new GoogleGenAI({ apiKey });
     const buffer = await imageBlob.arrayBuffer();
     const base64Data = btoa(new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
 
-    const prompt = `
+    const defaultPrompt = `
       TASK: SEAMLESS TEXTURE EXTRAPOLATION (OUTPAINTING).
       
       1. VOID DETECTION: Treat white (#FFFFFF) pixels around the edge as NULL space.
@@ -192,6 +193,10 @@ export const processGenerativeFill = async (
       3. SEAMLESS: The border between original and new must be invisible.
       4. NO DISTORTION: Do not stretch the original content.
     `;
+
+    const prompt = customPrompt || defaultPrompt;
+
+
 
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
@@ -250,18 +255,18 @@ export const processCompositeGeneration = async (
     const parts: any[] = [
       {
         text: `
-        TASK: COMPOSITE IMAGE MERGER.
+    TASK: COMPOSITE IMAGE MERGER.
         USER DIRECTIVE: "${prompt || 'Merge these images seamlessly.'}"
-        
-        RULES:
-        1. SPATIAL TYPOGRAPHY: If user asks to move text (up/down/left/right), use pixel coordinates to place it accurately.
+
+    RULES:
+    1. SPATIAL TYPOGRAPHY: If user asks to move text(up / down / left / right), use pixel coordinates to place it accurately.
         2. CONTENT PRESERVATION: Keep faces and text from source images intact.
         3. OUTPAINTING: If aspect ratios differ, fill the background, do not stretch.
-        
-        OUTPUT:
-        - Aspect Ratio: ${config.aspectRatio}
-        - Resolution: ${config.resolution}
-      `}
+
+      OUTPUT:
+    - Aspect Ratio: ${config.aspectRatio}
+    - Resolution: ${config.resolution}
+    `}
     ];
 
     const batch = images.slice(0, 4);
@@ -329,10 +334,10 @@ export const extractTextFromImages = async (apiKey: string, images: ImageItem[])
     const batch = images.slice(0, 5);
     const parts: any[] = [{
       text: `
-      TASK: PROFESSIONAL OCR.
+    TASK: PROFESSIONAL OCR.
       - Extract ALL visible text.
       - Detect curved, stylized, and background text.
-      - Output: PURE PLAIN TEXT ONLY. No markdown, no bold, no separators.
+      - Output: PURE PLAIN TEXT ONLY.No markdown, no bold, no separators.
       `
     }];
 
@@ -368,11 +373,11 @@ export const enhancePrompt = async (apiKey: string, originalPrompt: string): Pro
       contents: {
         parts: [{
           text: `
-          Act as a professional prompt engineer for AI image generation. 
+    Act as a professional prompt engineer for AI image generation. 
           Enhance the following prompt to be more descriptive, artistic, and specific. 
           Focus on lighting, style, camera angle, and details.
-          
-          Original: "${originalPrompt}"
+
+      Original: "${originalPrompt}"
           
           Output ONLY the enhanced prompt.
         ` }]
