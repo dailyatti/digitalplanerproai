@@ -46,8 +46,9 @@ export const processImageWithGemini = async (apiKey: string, item: ImageItem): P
         instructions = item.userPrompt;
       } else {
         instructions = `
-            Remove all text, watermarks, captions, logos, and signatures from this image.
-            Fill the removed areas with matching background texture and colors.
+            Create a text-free version of this image.
+            Remove all visible text, watermarks, captions, logos, and signatures.
+            Inpaint the areas where text was present with matching background texture and colors.
             The result should look completely natural with seamless blending.
             
             ${item.userPrompt}
@@ -95,6 +96,7 @@ export const processImageWithGemini = async (apiKey: string, item: ImageItem): P
       - Quality: 8k, Photorealistic, No artifacts.
     `;
 
+    // Try placing safetySettings in both locations to be safe
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: {
@@ -108,27 +110,34 @@ export const processImageWithGemini = async (apiKey: string, item: ImageItem): P
           imageSize: item.targetResolution as any,
           aspectRatio: item.targetAspectRatio as any,
         },
+        safetySettings: SAFETY_SETTINGS, // Try inside config too
       },
-      safetySettings: SAFETY_SETTINGS,
+      safetySettings: SAFETY_SETTINGS, // And top level
     } as any);
 
     let rawBase64: string | null = null;
     let failureReason = "";
+    let finishReason = "";
 
-    if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData && part.inlineData.data) {
-          rawBase64 = part.inlineData.data;
-          break;
-        } else if (part.text) {
-          failureReason += part.text;
+    if (response.candidates && response.candidates.length > 0) {
+      const candidate = response.candidates[0];
+      finishReason = candidate.finishReason || "UNKNOWN";
+
+      if (candidate.content && candidate.content.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            rawBase64 = part.inlineData.data;
+            break;
+          } else if (part.text) {
+            failureReason += part.text;
+          }
         }
       }
     }
 
     if (!rawBase64) {
       console.error("Gemini Response Failure:", JSON.stringify(response, null, 2));
-      throw new Error(failureReason || "No image data returned. The request may have been blocked by safety filters or the model refused the task.");
+      throw new Error(`Processing failed. Finish Reason: ${finishReason}. Message: ${failureReason || "No image data returned."}`);
     }
 
     const converted = await convertImageFormat(rawBase64, item.targetFormat);
@@ -153,6 +162,7 @@ export const generateImageFromText = async (
   try {
     const ai = new GoogleGenAI({ apiKey });
 
+    // @ts-ignore
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: { parts: [{ text: `Generate a high-quality image: ${prompt}` }] },
@@ -161,25 +171,32 @@ export const generateImageFromText = async (
           imageSize: config.resolution as any,
           aspectRatio: config.aspectRatio as any,
         },
+        safetySettings: SAFETY_SETTINGS,
       },
       safetySettings: SAFETY_SETTINGS,
     } as any);
 
     let rawBase64: string | null = null;
     let failureReason = "";
+    let finishReason = "";
 
-    if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData && part.inlineData.data) {
-          rawBase64 = part.inlineData.data;
-          break;
-        } else if (part.text) {
-          failureReason += part.text;
+    if (response.candidates && response.candidates.length > 0) {
+      const candidate = response.candidates[0];
+      finishReason = candidate.finishReason || "UNKNOWN";
+
+      if (candidate.content && candidate.content.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            rawBase64 = part.inlineData.data;
+            break;
+          } else if (part.text) {
+            failureReason += part.text;
+          }
         }
       }
     }
 
-    if (!rawBase64) throw new Error(failureReason || "No image data returned from AI.");
+    if (!rawBase64) throw new Error(`Generation failed. Finish Reason: ${finishReason}. Message: ${failureReason || "No image data."}`);
 
     const converted = await convertImageFormat(rawBase64, config.format);
     return {
@@ -231,6 +248,7 @@ export const processGenerativeFill = async (
         `;
     }
 
+    // @ts-ignore
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: {
@@ -243,25 +261,32 @@ export const processGenerativeFill = async (
         imageConfig: {
           imageSize: '2K',
         },
+        safetySettings: SAFETY_SETTINGS,
       },
       safetySettings: SAFETY_SETTINGS,
     } as any);
 
     let rawBase64: string | null = null;
     let failureReason = "";
+    let finishReason = "";
 
-    if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData && part.inlineData.data) {
-          rawBase64 = part.inlineData.data;
-          break;
-        } else if (part.text) {
-          failureReason += part.text;
+    if (response.candidates && response.candidates.length > 0) {
+      const candidate = response.candidates[0];
+      finishReason = candidate.finishReason || "UNKNOWN";
+
+      if (candidate.content && candidate.content.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            rawBase64 = part.inlineData.data;
+            break;
+          } else if (part.text) {
+            failureReason += part.text;
+          }
         }
       }
     }
 
-    if (!rawBase64) throw new Error(failureReason || "No image data returned from AI.");
+    if (!rawBase64) throw new Error(`Generative Fill failed. Finish Reason: ${finishReason}. Message: ${failureReason || "No image data."}`);
 
     const converted = await convertImageFormat(rawBase64, format);
     return {
@@ -321,6 +346,7 @@ export const processCompositeGeneration = async (
       });
     }
 
+    // @ts-ignore
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: { parts },
@@ -329,25 +355,32 @@ export const processCompositeGeneration = async (
           imageSize: config.resolution as any,
           aspectRatio: config.aspectRatio as any,
         },
+        safetySettings: SAFETY_SETTINGS,
       },
       safetySettings: SAFETY_SETTINGS,
     } as any);
 
     let rawBase64: string | null = null;
     let failureReason = "";
+    let finishReason = "";
 
-    if (response.candidates && response.candidates[0].content && response.candidates[0].content.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData && part.inlineData.data) {
-          rawBase64 = part.inlineData.data;
-          break;
-        } else if (part.text) {
-          failureReason += part.text;
+    if (response.candidates && response.candidates.length > 0) {
+      const candidate = response.candidates[0];
+      finishReason = candidate.finishReason || "UNKNOWN";
+
+      if (candidate.content && candidate.content.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            rawBase64 = part.inlineData.data;
+            break;
+          } else if (part.text) {
+            failureReason += part.text;
+          }
         }
       }
     }
 
-    if (!rawBase64) throw new Error(failureReason || "No composite data returned.");
+    if (!rawBase64) throw new Error(`Composite failed. Finish Reason: ${finishReason}. Message: ${failureReason || "No composite data."}`);
 
     const converted = await convertImageFormat(rawBase64, config.format);
     return {
