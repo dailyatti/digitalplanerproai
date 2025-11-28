@@ -894,8 +894,8 @@ const App: React.FC = () => {
             // Use the original file for text removal to avoid quality loss
             const blob = item.file;
 
-            // Explicitly request text removal
-            const result = await processGenerativeFill(apiKey, blob, item.targetFormat, "Remove all text, captions, and watermarks from this image. Fill with matching background.");
+            // Explicitly request text removal - FIXED: processGenerativeFill takes (file, prompt) not (apiKey, file, format, prompt)
+            const result = await processGenerativeFill(blob, "Remove all text, captions, and watermarks from this image. Fill with matching background.");
 
             // Create new variant
             const variantId = uuidv4();
@@ -974,9 +974,20 @@ const App: React.FC = () => {
 
         const count = selectedIds.length;
         setImages(prev => prev.filter(img => !selectedIds.includes(img.id)));
-        setSelectedIds([]);
         toast.success(`Deleted ${count} images`);
     };
+
+    const selectAll = () => {
+        setSelectedIds(images.map(img => img.id));
+        toast.success(`Selected ${images.length} images`);
+    };
+
+    const deselectAll = () => {
+        setSelectedIds([]);
+        toast('Deselected all');
+    };
+
+
 
     const currentLang = SUPPORTED_LANGUAGES.find(l => l.code === i18n.language) || SUPPORTED_LANGUAGES[0];
     const originalCount = images.filter(i => !i.duplicateIndex || i.duplicateIndex === 1).length;
@@ -1133,8 +1144,8 @@ const App: React.FC = () => {
                                     <button
                                         onClick={applyBulkSettings}
                                         className={`w - full py - 3 rounded - lg font - bold text - sm uppercase tracking - wide transition - all flex items - center justify - center gap - 2 ${isApplied
-                                                ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
-                                                : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                                            ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                                            : 'bg-indigo-600 hover:bg-indigo-500 text-white'
                                             } `}
                                     >
                                         {isApplied ? <CopyCheck className="w-5 h-5" /> : <Layers className="w-5 h-5" />}
@@ -1183,6 +1194,13 @@ const App: React.FC = () => {
 
                                     {/* Primary Actions */}
                                     <div className="grid grid-cols-2 gap-3">
+                                        <button onClick={selectAll} disabled={images.length === 0} className="bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-5 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg transition-all">
+                                            <CopyCheck className="w-5 h-5" /> Select All
+                                        </button>
+
+                                        <button onClick={deselectAll} disabled={selectedIds.length === 0} className="bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 px-5 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg transition-all">
+                                            <X className="w-5 h-5" /> Deselect All
+                                        </button>
                                         <button onClick={processAll} disabled={globalProcessing} className="bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 text-white px-5 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-emerald-900/20 transition-all">
                                             {globalProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
                                             {t('startQueue')}
