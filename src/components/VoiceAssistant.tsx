@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mic, MicOff, Loader2, Sparkles } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality, Type } from '@google/genai';
 import { ImageItem } from '../types';
+import i18next from 'i18next';
 
 interface VoiceAssistantProps {
     apiKey: string | null;
@@ -174,55 +175,62 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
     const getSystemInstruction = () => {
         const isHu = currentLanguage === 'hu';
+        const contextState = `
+        [CURRENT UI CONTEXT]
+        - Active Modal: ${modalsState.composite ? 'COMPOSITE_GENERATOR' : modalsState.ocr ? 'OCR_SCANNER' : modalsState.guide ? 'USER_GUIDE' : 'MAIN_DASHBOARD'}
+        - Language: ${currentLanguage}
+        - Images: ${images.length}
+        `;
 
         if (isHu) {
             return `
           SZEREPLŐ: BananaAI Rendszergazda és Profi Prompt Mérnök.
           FELADAT: A felhasználói utasítások AZONNALI, KÉRDÉS NÉLKÜLI végrehajtása.
           
+          ${contextState}
+
           FONTOS SZABÁLYOK:
           
-          1. NYELVVÁLTÁS (Szigorú Kódolás):
-             - Ha a felhasználó nyelvet vált (pl. "Legyen angol", "Válts magyarra"), használd a 'manage_ui_state' eszközt 'CHANGE_LANG' akcióval.
-             - ÉRTÉKEK: 
-               - "Magyar" -> 'hu' (KÖTELEZŐEN kisbetűs kód!)
-               - "Angol" -> 'en'
-               - "Német" -> 'de'
-             - SOHA ne küldd a teljes nevet (pl. "Hungarian"), CSAK a kódot ('hu').
+          1. KONTEXTUS ÉRZÉKELÉS (Kritikus):
+             - Ha a 'COMPOSITE_GENERATOR' aktív, minden "állítás" (pl. "legyen rácsos") a 'set_composite_config' eszközre vonatkozik.
+             - Ha a 'MAIN_DASHBOARD' aktív, a 'update_dashboard' eszközt használd.
+             - Ha a felhasználó azt kéri "Olvasd fel a dokumentációt", hívd meg a 'read_docs_content' eszközt, majd olvasd fel a kapott szöveget.
 
-          2. KÉPGENERÁLÁS (Extrém Engedelmesség):
-             - TRIGGEREK: "Generáld le", "Nyomd meg a gombot", "Mehet", "Csináld", "Start", "Készítsd el".
-             - AKCIÓ: Ha ezeket hallod, AZONNAL hívd meg a 'trigger_native_generation' eszközt.
-             - PROMPT BŐVÍTÉS: Ha a felhasználó rövid leírást ad (pl. "egy kutya"), te bővítsd ki profi angol leírássá ("Cinematic shot of a dog..."), és ezt küldd el a 'trigger_native_generation' prompt paraméterében.
-             - NE KÉRDEZZ VISSZA ("Biztosan?"). Csináld.
+          2. NYELVVÁLTÁS (Szigorú Kódolás):
+             - "Válts magyarra" -> 'manage_ui_state' -> 'CHANGE_LANG' -> 'hu'.
+             - "Switch to English" -> 'manage_ui_state' -> 'CHANGE_LANG' -> 'en'.
 
-          3. MINDENT LÁTÓ SZEM:
-             - Használd a 'get_system_state'-et, ha nem tudod, mi van a képernyőn.
+          3. KÉPGENERÁLÁS (Extrém Engedelmesség):
+             - "Generáld le", "Mehet", "Start" -> 'trigger_native_generation'.
+             - Ha a prompt rövid ("egy kutya"), BŐVÍTSD KI profi angol leírássá.
+
+          4. DOKUMENTÁCIÓ:
+             - Ha a felhasználó kérdez a rendszerről, hívd meg a 'read_docs_content'-et, hogy pontos választ adhass.
           `;
         } else {
             return `
           ROLE: BananaAI System Admin & Expert Prompt Engineer.
           TASK: Execute user commands IMMEDIATELY with ZERO hesitation.
           
+          ${contextState}
+          
           CRITICAL PROTOCOLS:
           
-          1. LANGUAGE SWITCHING (Strict ISO Codes):
-             - Command: "Switch to Hungarian", "Change language to English".
-             - Tool: 'manage_ui_state' -> action: 'CHANGE_LANG'.
-             - MAPPING:
-               - "Hungarian" -> 'hu' (MUST use code!)
-               - "English" -> 'en'
-               - "German" -> 'de'
-             - NEVER send full names like "Hungarian".
+          1. CONTEXT AWARENESS:
+             - If 'COMPOSITE_GENERATOR' is active, use 'set_composite_config' for layout/prompt changes.
+             - If 'MAIN_DASHBOARD' is active, use 'update_dashboard'.
+             - If user asks to "Read the docs", call 'read_docs_content' and read the text aloud.
 
-          2. IMAGE GENERATION (Atomic Execution):
-             - TRIGGERS: "Generate it", "Press the button", "Go", "Start", "Do it".
-             - ACTION: IMMEDIATELY call 'trigger_native_generation'.
-             - PROMPT EXPANSION: If user says "a cat", you MUST expand it to "Cinematic, photorealistic cat, 8k lighting..." inside the tool call.
-             - DO NOT ASK for confirmation. Just execute.
+          2. LANGUAGE SWITCHING:
+             - "Hungarian" -> 'hu'
+             - "English" -> 'en'
 
-          3. CONTEXT AWARENESS:
-             - Use 'get_system_state' to see active modals or input text.
+          3. IMAGE GENERATION:
+             - "Start", "Generate" -> 'trigger_native_generation'.
+             - EXPAND prompts to cinematic quality.
+
+          4. DOCUMENTATION:
+             - Use 'read_docs_content' to answer system questions accurately.
           `;
         }
     };
@@ -409,6 +417,22 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                                 action: { type: Type.STRING, enum: ['CLEAR_ALL', 'DOWNLOAD_ZIP'] }
                             }
                         }
+                    },
+                    {
+                        name: 'read_docs_content',
+                        description: 'Returns the full text of the User Guide documentation for reading aloud.',
+                        parameters: { type: Type.OBJECT, properties: {} }
+                    },
+                    {
+                        name: 'set_composite_config',
+                        description: 'Sets configuration for the Composite Generator (POD).',
+                        parameters: {
+                            type: Type.OBJECT,
+                            properties: {
+                                prompt: { type: Type.STRING },
+                                layout: { type: Type.STRING, enum: ['GRID', 'VERTICAL', 'HORIZONTAL'] }
+                            }
+                        }
                     }
                 ]
             }];
@@ -538,6 +562,20 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                                 } else if (fc.name === 'manage_queue_actions') {
                                     onCommand({ queueAction: args.action });
                                     result = { ok: true, message: "Queue action executed." };
+                                } else if (fc.name === 'read_docs_content') {
+                                    // Fetch all guide keys from translations
+                                    const guideKeys = [
+                                        'guideTitle', 'guideSection1Title', 'guideSection1Desc', 'guideSection1Item1', 'guideSection1Item2', 'guideSection1Item3',
+                                        'guideSection2Title', 'guideSection2Desc1', 'guideSection2Desc2',
+                                        'guideSection3Title', 'guideSection3Desc',
+                                        'guideSection4Title', 'guideAspectRatio', 'guideAspectRatioDesc', 'guideResolution', 'guideResolutionDesc',
+                                        'guideSection5Title', 'guideSection5Desc'
+                                    ];
+                                    const fullText = guideKeys.map(key => i18next.t(key)).join('\n');
+                                    result = { ok: true, message: fullText };
+                                } else if (fc.name === 'set_composite_config') {
+                                    onCommand({ compositeAction: true, ...args });
+                                    result = { ok: true, message: "Composite config updated." };
                                 }
 
                                 functionResponses.push({

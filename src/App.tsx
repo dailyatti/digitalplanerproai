@@ -554,6 +554,22 @@ const App: React.FC = () => {
         setTimeout(() => setIsApplied(false), 1500);
     };
 
+    // Modals State
+    const [modals, setModals] = useState({
+        composite: false,
+        ocr: false,
+        guide: false,
+        langMenu: false
+    });
+
+    // Composite State (Lifted for Voice Control)
+    const [compositeConfig, setCompositeConfig] = useState({
+        prompt: '',
+        format: OutputFormat.JPG,
+        resolution: AiResolution.RES_2K,
+        aspectRatio: AspectRatio.SQUARE
+    });
+
     // --- CENTRAL VOICE COMMAND DISPATCHER ---
     const handleVoiceCommand = (cmd: any) => {
         // 0. SCROLL ACTION
@@ -859,7 +875,7 @@ const App: React.FC = () => {
 
                 <AnimatePresence>
                     {images.length > 0 && (
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="sticky top-24 z-40 mb-10">
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="sticky top-20 z-40 mb-10">
                             {/* Redesigned: Split into TWO separate cards for better readability */}
                             <div className="flex flex-col xl:flex-row gap-6 max-w-[1600px] mx-auto">
 
@@ -936,8 +952,8 @@ const App: React.FC = () => {
                                     <button
                                         onClick={applyBulkSettings}
                                         className={`w-full py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 ${isApplied
-                                                ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
-                                                : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                                            ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                                            : 'bg-indigo-600 hover:bg-indigo-500 text-white'
                                             }`}
                                     >
                                         {isApplied ? <CopyCheck className="w-5 h-5" /> : <Layers className="w-5 h-5" />}
