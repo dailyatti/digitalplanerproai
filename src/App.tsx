@@ -860,35 +860,56 @@ const App: React.FC = () => {
                 <AnimatePresence>
                     {images.length > 0 && (
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="sticky top-24 z-40 mb-10">
-                            <div className="bg-[#0f172a]/95 backdrop-blur-2xl rounded-2xl border border-slate-700/50 p-4 shadow-2xl flex flex-wrap xl:flex-nowrap gap-4 max-w-full mx-auto">
+                            {/* Redesigned: Split into TWO separate cards for better readability */}
+                            <div className="flex flex-col xl:flex-row gap-6 max-w-[1600px] mx-auto">
 
-                                <div className="flex-1 min-w-[300px] bg-slate-950/50 rounded-xl border border-slate-800/50 p-3 flex flex-col lg:flex-row gap-3 items-center relative">
-                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest px-2 whitespace-nowrap">
-                                        <Layers className="w-4 h-4" /> {t('globalConfig')}
-                                    </div>
-                                    <div className="h-8 w-px bg-slate-800 hidden lg:block"></div>
-
-                                    <div className="grid grid-cols-3 gap-2 w-full lg:w-auto">
-                                        <select value={bulkFormat} onChange={(e) => setBulkFormat(e.target.value as OutputFormat)} className="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-2.5 outline-none focus:border-emerald-500/50 cursor-pointer w-full">
-                                            <option value={OutputFormat.JPG}>JPG</option>
-                                            <option value={OutputFormat.PNG}>PNG</option>
-                                            <option value={OutputFormat.WEBP}>WEBP</option>
-                                        </select>
-                                        <select value={bulkAspect} onChange={(e) => setBulkAspect(e.target.value as AspectRatio)} className="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-2.5 outline-none focus:border-emerald-500/50 cursor-pointer w-full">
-                                            <option value={AspectRatio.SQUARE}>1:1</option>
-                                            <option value={AspectRatio.LANDSCAPE}>16:9</option>
-                                            <option value={AspectRatio.PORTRAIT}>9:16</option>
-                                        </select>
-                                        <select value={bulkRes} onChange={(e) => setBulkRes(e.target.value as AiResolution)} className="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-2.5 outline-none focus:border-emerald-500/50 cursor-pointer w-full">
-                                            <option value={AiResolution.RES_1K}>1K</option>
-                                            <option value={AiResolution.RES_2K}>2K</option>
-                                            <option value={AiResolution.RES_4K}>4K</option>
-                                        </select>
+                                {/* SETTINGS CARD - Left Side */}
+                                <div className="glass-panel p-6 flex-1 min-w-0">
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className="p-2 bg-indigo-500/10 rounded-lg">
+                                            <Layers className="w-5 h-5 text-indigo-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wide">{t('globalConfig')}</h3>
+                                            <p className="text-xs text-slate-400">Apply settings to all images</p>
+                                        </div>
                                     </div>
 
-                                    <div className="w-full relative flex-1 group min-w-[200px]">
-                                        <div className={`absolute top-0 left-0 transition-all duration-300 ease-in-out z-50 ${isPromptFocused ? 'h-36 w-full lg:w-[400px] shadow-2xl rounded-xl' : 'h-full w-full'}`}>
-                                            <PenTool className={`w-3.5 h-3.5 text-slate-500 absolute left-3 top-3 z-30 transition-colors ${isPromptFocused ? 'text-purple-400' : ''}`} />
+                                    {/* Format, Aspect, Resolution */}
+                                    <div className="grid grid-cols-3 gap-3 mb-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Format</label>
+                                            <select value={bulkFormat} onChange={(e) => setBulkFormat(e.target.value as OutputFormat)} className="w-full bg-slate-900/80 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-all">
+                                                <option value={OutputFormat.JPG}>JPG</option>
+                                                <option value={OutputFormat.PNG}>PNG</option>
+                                                <option value={OutputFormat.WEBP}>WEBP</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Aspect</label>
+                                            <select value={bulkAspect} onChange={(e) => setBulkAspect(e.target.value as AspectRatio)} className="w-full bg-slate-900/80 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-all">
+                                                <option value={AspectRatio.SQUARE}>1:1 Square</option>
+                                                <option value={AspectRatio.LANDSCAPE}>16:9 Wide</option>
+                                                <option value={AspectRatio.PORTRAIT}>9:16 Tall</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Quality</label>
+                                            <select value={bulkRes} onChange={(e) => setBulkRes(e.target.value as AiResolution)} className="w-full bg-slate-900/80 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-all">
+                                                <option value={AiResolution.RES_1K}>1K Quality</option>
+                                                <option value={AiResolution.RES_2K}>2K Quality</option>
+                                                <option value={AiResolution.RES_4K}>4K Quality</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Global Prompt */}
+                                    <div className="mb-5">
+                                        <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide flex items-center gap-2">
+                                            <PenTool className="w-3.5 h-3.5" />
+                                            Creative Prompt (Optional)
+                                        </label>
+                                        <div className="relative">
                                             {isPromptFocused ? (
                                                 <textarea
                                                     autoFocus
@@ -896,7 +917,7 @@ const App: React.FC = () => {
                                                     onChange={(e) => setGlobalPrompt(e.target.value)}
                                                     onBlur={() => setIsPromptFocused(false)}
                                                     placeholder={t('creativePrompt')}
-                                                    className="w-full h-full bg-slate-900 border border-purple-500 text-slate-200 text-xs rounded-lg pl-9 pr-3 py-2.5 outline-none resize-none shadow-lg ring-1 ring-purple-500/30"
+                                                    className="w-full h-32 bg-slate-900/80 border border-purple-500 text-slate-200 text-sm rounded-lg px-4 py-3 outline-none resize-none focus:ring-2 focus:ring-purple-500/20 transition-all"
                                                 />
                                             ) : (
                                                 <input
@@ -905,56 +926,73 @@ const App: React.FC = () => {
                                                     onFocus={() => setIsPromptFocused(true)}
                                                     readOnly
                                                     placeholder={t('creativePrompt')}
-                                                    className="w-full bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg pl-9 pr-3 py-2.5 outline-none focus:border-purple-500/50 cursor-text text-ellipsis"
+                                                    className="w-full bg-slate-900/80 border border-slate-700 text-slate-300 text-sm rounded-lg px-4 py-3 outline-none focus:border-purple-500 cursor-text"
                                                 />
                                             )}
                                         </div>
-                                        <div className="h-[34px] w-full"></div>
                                     </div>
 
-                                    <button onClick={applyBulkSettings} className={`w-full lg:w-auto px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-2 whitespace-nowrap z-10 ${isApplied ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
-                                        {isApplied ? <CopyCheck className="w-4 h-4" /> : <Layers className="w-4 h-4" />} {isApplied ? t('settingsSynced') : t('applyAll')}
+                                    {/* Apply Button */}
+                                    <button
+                                        onClick={applyBulkSettings}
+                                        className={`w-full py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 ${isApplied
+                                                ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                                                : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                                            }`}
+                                    >
+                                        {isApplied ? <CopyCheck className="w-5 h-5" /> : <Layers className="w-5 h-5" />}
+                                        {isApplied ? t('settingsSynced') : t('applyAll')}
                                     </button>
                                 </div>
 
-                                <div className="bg-slate-900 rounded-xl border border-slate-800 p-3 flex flex-wrap lg:flex-nowrap items-center gap-3 justify-between lg:justify-start z-10 flex-1 xl:flex-none">
-                                    <div className="flex flex-col items-start px-2 whitespace-nowrap mr-auto lg:mr-0">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                            <BrainCircuit className="w-4 h-4" /> {t('queue')}
+                                {/* QUEUE & ACTIONS CARD - Right Side */}
+                                <div className="glass-panel p-6 xl:w-[500px]">
+                                    {/* Queue Header */}
+                                    <div className="flex items-center justify-between mb-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-emerald-500/10 rounded-lg">
+                                                <BrainCircuit className="w-5 h-5 text-emerald-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wide">{t('queue')}</h3>
+                                                <p className="text-xs text-slate-400 font-mono">{originalCount} Originals • {variantCount} Variants</p>
+                                            </div>
                                         </div>
-                                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                                            {originalCount} Orig | {variantCount} Vars
-                                        </div>
+                                        <button onClick={clearQueue} className="p-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 rounded-lg border border-red-900/50 transition-all" title={t('clearQueue')}>
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
                                     </div>
-                                    <div className="h-8 w-px bg-slate-800 hidden lg:block"></div>
 
-                                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full lg:w-auto justify-end">
-                                        <button onClick={clearQueue} className="p-2.5 bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 rounded-lg border border-red-900/50 transition-all" title={t('clearQueue')}>
-                                            <Trash2 className="w-4 h-4" />
+                                    {/* Action Buttons Grid */}
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <button onClick={openCompositeModal} className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white px-4 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-pink-900/20">
+                                            <PlusSquare className="w-4 h-4" /> {t('composite')}
                                         </button>
 
-                                        <button onClick={openCompositeModal} className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white px-3 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 whitespace-nowrap transition-all shadow-lg shadow-pink-900/20 flex-1 sm:flex-none justify-center">
-                                            <PlusSquare className="w-3.5 h-3.5" /> {t('composite')}
+                                        <button onClick={openOCRModal} disabled={isExtractingText} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-4 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                            {isExtractingText ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} {t('extractText')}
+                                        </button>
+                                    </div>
+
+                                    {/* Naming Pattern */}
+                                    <div className="mb-4">
+                                        <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">File Naming</label>
+                                        <select value={namingPattern} onChange={(e) => setNamingPattern(e.target.value as NamingPattern)} className="w-full bg-slate-900/80 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2.5 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer transition-all">
+                                            <option value={NamingPattern.ORIGINAL}>{t('originalName')}</option>
+                                            <option value={NamingPattern.RANDOM_ID}>{t('randomId')}</option>
+                                            <option value={NamingPattern.SEQUENTIAL_PREFIX}>{t('seqPrefix')}</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Primary Actions */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button onClick={processAll} disabled={globalProcessing} className="bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 text-white px-5 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-emerald-900/20 transition-all">
+                                            {globalProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
+                                            {t('startQueue')}
                                         </button>
 
-                                        <button onClick={openOCRModal} disabled={isExtractingText} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 whitespace-nowrap transition-all flex-1 sm:flex-none justify-center">
-                                            {isExtractingText ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />} {t('extractText')}
-                                        </button>
-
-                                        <div className="flex items-center bg-slate-950 rounded-lg border border-slate-800 px-2 h-[38px] flex-1 sm:flex-none">
-                                            <select value={namingPattern} onChange={(e) => setNamingPattern(e.target.value as NamingPattern)} className="bg-transparent text-xs text-slate-400 outline-none h-full cursor-pointer w-full">
-                                                <option value={NamingPattern.ORIGINAL}>{t('originalName')}</option>
-                                                <option value={NamingPattern.RANDOM_ID}>{t('randomId')}</option>
-                                                <option value={NamingPattern.SEQUENTIAL_PREFIX}>{t('seqPrefix')}</option>
-                                            </select>
-                                        </div>
-
-                                        <button onClick={processAll} disabled={globalProcessing} className="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 uppercase tracking-wide whitespace-nowrap shadow-lg shadow-emerald-900/20 transition-all flex-1 sm:flex-none justify-center">
-                                            {globalProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />} {t('startQueue')}
-                                        </button>
-
-                                        <button onClick={downloadAllProcessed} className="bg-white hover:bg-slate-200 text-slate-950 px-3 py-2.5 rounded-lg flex items-center justify-center shadow-lg transition-all">
-                                            <Download className="w-4 h-4" />
+                                        <button onClick={downloadAllProcessed} className="bg-white hover:bg-slate-200 text-slate-950 px-5 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all">
+                                            <Download className="w-5 h-5" /> Download
                                         </button>
                                     </div>
                                 </div>
