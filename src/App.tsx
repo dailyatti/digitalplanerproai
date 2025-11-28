@@ -694,6 +694,32 @@ const App: React.FC = () => {
             return;
         }
 
+        // 4. GLOBAL CONFIG ACTIONS
+        if (cmd.setGlobalConfig) {
+            if (cmd.setGlobalConfig.format) {
+                const fmt = cmd.setGlobalConfig.format;
+                if (fmt === 'JPG') setBulkFormat(OutputFormat.JPG);
+                if (fmt === 'PNG') setBulkFormat(OutputFormat.PNG);
+                if (fmt === 'WEBP') setBulkFormat(OutputFormat.WEBP);
+            }
+            if (cmd.setGlobalConfig.resolution) {
+                const res = cmd.setGlobalConfig.resolution;
+                if (res === '1K') setBulkRes(AiResolution.RES_1K);
+                if (res === '2K') setBulkRes(AiResolution.RES_2K);
+                if (res === '4K') setBulkRes(AiResolution.RES_4K);
+            }
+            if (cmd.setGlobalConfig.aspectRatio) {
+                const ar = cmd.setGlobalConfig.aspectRatio;
+                if (ar === '1:1') setBulkAspect(AspectRatio.SQUARE);
+                if (ar === '16:9') setBulkAspect(AspectRatio.LANDSCAPE);
+                if (ar === '9:16') setBulkAspect(AspectRatio.PORTRAIT);
+                if (ar === '4:3') setBulkAspect(AspectRatio.STANDARD_LANDSCAPE);
+                if (ar === '3:4') setBulkAspect(AspectRatio.STANDARD_PORTRAIT);
+            }
+            toast.success("Global configuration updated via Voice.");
+            return;
+        }
+
         // 4. GLOBAL QUEUE ACTIONS
         if (cmd.queueAction) {
             switch (cmd.queueAction) {

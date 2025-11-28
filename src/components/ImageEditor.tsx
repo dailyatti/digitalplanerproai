@@ -132,14 +132,18 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onSave, onCl
                 // Yes, let's disable drag/zoom in Mask Mode.
 
                 if (ctx) {
-                    // We need to draw the mask onto the baseCanvas.
-                    // Since we can't easily map the coordinates perfectly without complex math,
-                    // we will assume the maskCanvas covers the visible image area.
-                    // We draw the maskCanvas onto the baseCanvas, scaling it.
+                    // FIX: Map mask coordinates correctly to the cropped image
+                    const cropBox = cropper.getCropBoxData();
+
+                    // The maskCanvas matches the container size.
+                    // We only want the part of the mask that is inside the crop box.
+                    // And we draw it onto the baseCanvas (which represents the cropped area).
+
                     ctx.globalCompositeOperation = 'destination-out'; // Erase where the mask is
-                    ctx.drawImage(maskCanvas,
-                        0, 0, maskCanvas.width, maskCanvas.height, // Source
-                        0, 0, baseCanvas.width, baseCanvas.height // Destination
+                    ctx.drawImage(
+                        maskCanvas,
+                        cropBox.left, cropBox.top, cropBox.width, cropBox.height, // Source: The area of the mask inside the crop box
+                        0, 0, baseCanvas.width, baseCanvas.height // Destination: The full base canvas
                     );
                 }
             }

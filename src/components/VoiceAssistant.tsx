@@ -439,6 +439,18 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
                         }
                     },
                     {
+                        name: 'set_global_config',
+                        description: 'Sets the GLOBAL configuration for bulk processing (Format, Resolution, Aspect Ratio).',
+                        parameters: {
+                            type: Type.OBJECT,
+                            properties: {
+                                format: { type: Type.STRING, enum: ['JPG', 'PNG', 'WEBP'] },
+                                resolution: { type: Type.STRING, enum: ['1K', '2K', '4K'] },
+                                aspectRatio: { type: Type.STRING, enum: ['1:1', '16:9', '9:16', '4:3', '3:4'] }
+                            }
+                        }
+                    },
+                    {
                         name: 'read_docs_content',
                         description: 'Returns the full text of the User Guide documentation for reading aloud.',
                         parameters: { type: Type.OBJECT, properties: {} }

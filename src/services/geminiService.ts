@@ -196,13 +196,25 @@ export const processGenerativeFill = async (
 
     const prompt = customPrompt || defaultPrompt;
 
-
+    // Enhanced Text Removal Logic
+    let finalPrompt = prompt;
+    const promptLower = (customPrompt || "").toLowerCase();
+    if (promptLower.includes("remove") && (promptLower.includes("text") || promptLower.includes("watermark") || promptLower.includes("caption"))) {
+      finalPrompt += `
+        
+        NEGATIVE PROMPT (THINGS TO EXCLUDE):
+        text, watermark, letters, characters, subtitles, captions, copyright, signature, logo, writing, typography, numbers, date, time, branding.
+        
+        INSTRUCTION:
+        Ensure the area where text was removed is filled with natural background texture matching the surrounding area. Seamless blending. High fidelity.
+        `;
+    }
 
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: {
         parts: [
-          { text: prompt },
+          { text: finalPrompt },
           { inlineData: { mimeType: 'image/png', data: base64Data } },
         ],
       },

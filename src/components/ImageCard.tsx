@@ -59,7 +59,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ item, onUpdateConfig, onPr
             if (!ctx) return;
             ctx.drawImage(img, 0, 0);
 
-            const mimeType = format === 'jpg' ? 'image/jpeg' : format === 'png' ? 'image/png' : 'image/webp';
+            const mimeType = (format === 'jpg' || format === 'jpeg') ? 'image/jpeg' : format === 'png' ? 'image/png' : 'image/webp';
             const dataUrl = canvas.toDataURL(mimeType, 0.95);
 
             const link = document.createElement('a');
